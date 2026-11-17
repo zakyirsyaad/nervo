@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { poolAbi } from "@/config/abis";
-import { BASE_SEPOLIA_BLOCK_TIME_MS } from "@/config/chains";
+import { executorAbi, poolAbi } from "@/config/abis";
+import { BASE_SEPOLIA_BLOCK_TIME_MS, originChain } from "@/config/chains";
 import { ADDRESSES } from "@/config/contracts";
 import { lookbackStart, nextScanStart, splitRange } from "@/lib/blockRange";
 import { mapLimited } from "@/lib/concurrency";
@@ -24,8 +24,15 @@ export const HISTORY_HOURS = Math.floor((Number(LOOKBACK_BLOCKS) * BASE_SEPOLIA_
 
 type PoolEvent = Extract<(typeof poolAbi)[number], { type: "event" }>;
 
-const POOL_EVENTS = poolAbi.filter((item): item is PoolEvent => item.type === "event");
-const POOLS = { A: ADDRESSES.poolA, B: ADDRESSES.poolB } as const;
+// Pool swaps and reserve changes, plus the executor's record of each callback so a trade can be paired with the
+// change that asked for it.
+const HISTORY_EVENTS = [...poolAbi.filter((item): item is PoolEvent => item.type === "event"), ...executorAbi];
+const SOURCES = {
+  chainId: originChain.id,
+  pools: { A: ADDRESSES.poolA, B: ADDRESSES.poolB },
+  weth: ADDRESSES.weth,
+  executor: ADDRESSES.arbExecutor,
+} as const;
 
 export interface PoolHistory {
   readonly logs: readonly PoolLog[];
@@ -35,9 +42,14 @@ export interface PoolHistory {
 }
 
 async function readLogs(fromBlock: bigint, toBlock: bigint): Promise<PoolLog[]> {
-  const logs = await historyClient.getLogs({ address: [POOLS.A, POOLS.B], events: POOL_EVENTS, fromBlock, toBlock });
+  const logs = await historyClient.getLogs({
+    address: [SOURCES.pools.A, SOURCES.pools.B, SOURCES.executor],
+    events: HISTORY_EVENTS,
+    fromBlock,
+    toBlock,
+  });
   return logs.flatMap((log) => {
-    const decoded = toPoolLog(log, POOLS, ADDRESSES.weth);
+    const decoded = toPoolLog(log, SOURCES);
     return decoded ? [decoded] : [];
   });
 }

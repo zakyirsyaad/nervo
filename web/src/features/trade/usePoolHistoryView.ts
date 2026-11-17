@@ -36,11 +36,22 @@ export interface PoolHistoryView {
   readonly retry: () => void;
 }
 
-/** The pools' recent history, shaped for the trade and protect pages. */
-export function usePoolHistoryView(live: Partial<Record<PoolKey, Reserves>> | undefined, account: Address | undefined): PoolHistoryView {
+/**
+ * The pools' recent history, shaped for the trade and protect pages. With `focus`, the steps are the changes to that
+ * pool only, picked from the whole window before the newest ones are kept.
+ */
+export function usePoolHistoryView(
+  live: Partial<Record<PoolKey, Reserves>> | undefined,
+  account: Address | undefined,
+  focus?: PoolKey,
+): PoolHistoryView {
   const { data, isError, isPending, refetch } = usePoolHistory();
   const txs = useMemo(() => (data ? groupByTransaction(data.logs) : []), [data]);
-  const steps = useMemo(() => buildPriceSteps(txs, live, MAX_STEPS, ADDRESSES.arbExecutor), [txs, live]);
+  const steps = useMemo(() => {
+    if (!focus) return buildPriceSteps(txs, live, MAX_STEPS, ADDRESSES.arbExecutor);
+    const all = buildPriceSteps(txs, live, txs.length, ADDRESSES.arbExecutor);
+    return all.filter((step) => step.touches.includes(focus)).slice(-MAX_STEPS);
+  }, [txs, live, focus]);
   const rows = useMemo(() => (data ? buildLoops(txs, live, ADDRESSES.arbExecutor, data.readAtSeconds) : []), [txs, live, data]);
 
   function describeStep(step: PriceStep): string {

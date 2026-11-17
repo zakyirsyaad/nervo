@@ -12,8 +12,6 @@ import { ORDER_SCAN_LOOKBACK, readOrderViews } from "./scan";
 
 const LOG_INTERVAL_MS = 8_000;
 const VIEW_INTERVAL_MS = 8_000;
-// Orders read in full; older ones still count towards nothing shown.
-const MAX_ORDERS = 24;
 // Each scan starts a few blocks back, in case the node that answered getLogs was behind the one that gave the head.
 const RESCAN_OVERLAP_BLOCKS = 5n;
 const LOGS_KEY = ["order-book-logs", ORDER_STACK.orderBook] as const;
@@ -101,7 +99,8 @@ export function useOrderBook(isDeployed: boolean): OrderBook {
     refetchInterval: LOG_INTERVAL_MS,
   });
 
-  const refs = (logs.data?.placed ?? []).slice(0, MAX_ORDERS);
+  // Every order placed in the window: one multicall reads them all, so the list and its counts cover the whole window.
+  const refs = logs.data?.placed ?? [];
   const views = useQuery({
     queryKey: ["order-book-views", ORDER_STACK.orderBook, refs.map((ref) => ref.id.toString()).join(",")],
     queryFn: () => readOrderViews(refs),

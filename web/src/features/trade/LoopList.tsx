@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Address } from "viem";
+import type { Outcome } from "@/config/abis";
 import { HashLink } from "@/components/HashLink";
 import { USDC_DECIMALS, WETH_DECIMALS } from "@/config/contracts";
 import { formatAgo, formatAmount, formatCompact, formatPercent, shortHex } from "@/lib/format";
@@ -24,6 +25,14 @@ function usdc(amount: bigint): string {
 function legText(leg: SwapLeg): string {
   return leg.wethIn ? `${weth(leg.amountIn)} for ${usdc(leg.amountOut)}` : `${usdc(leg.amountIn)} for ${weth(leg.amountOut)}`;
 }
+
+/** Why the executor stopped, in words, for the outcomes a visitor is likely to see. */
+const SKIP_TEXT: Partial<Record<Outcome, string>> = {
+  SkippedMarginGone: "It checked the prices again on arrival and the gap was already gone.",
+  SkippedExpired: "It arrived after its 60-second deadline.",
+  SkippedAlreadyExecuted: "It had already traded for this change.",
+  SkippedInsufficientInventory: "It did not hold enough USDC to trade.",
+};
 
 /** Answer time to one decimal, e.g. "1.6 s". */
 function seconds(ms: number): string {
@@ -133,6 +142,15 @@ function NoChangeText() {
 function AnswerText({ row }: { row: LoopRow }) {
   const { answer, verdict } = row;
   if (answer) return <TradeText answer={answer} gapAfter={row.gapAfterAnswer} />;
+  if (verdict === "skipped" && row.skipped) {
+    return (
+      <>
+        <span className={`${styles.rowTitle} muted`}>The contract came back and did not trade</span>
+        <span className="small muted">{SKIP_TEXT[row.skipped] ?? "It checked again on arrival and stopped."}</span>
+        <span className="mono faint">{row.skipped}</span>
+      </>
+    );
+  }
   if (verdict === "too-small") {
     return (
       <>

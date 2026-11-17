@@ -32,9 +32,9 @@ export function OrdersWorkspace() {
   const myOrders = useMyOrders(wallet.account, contracts.isDeployed);
   const book = useOrderBook(contracts.isDeployed);
   const live = useMemo(() => (prices.base ? { A: prices.base } : undefined), [prices.base]);
-  const history = usePoolHistoryView(live, wallet.account);
-  const poolASteps = useMemo(() => history.steps.filter((step) => step.touches.includes("A")), [history.steps]);
-  const fired = useMemo(() => firedSteps(poolASteps, book.outcomes), [poolASteps, book.outcomes]);
+  // Orders watch Pool A only, so the chart takes the newest changes to Pool A from the whole window.
+  const history = usePoolHistoryView(live, wallet.account, "A");
+  const fired = useMemo(() => firedSteps(history.steps, book.outcomes), [history.steps, book.outcomes]);
   const cancel = useCancelOrder();
   // The followed order is kept as a ref, so it stays put when newer orders push it out of either list.
   const [selectedRef, setSelectedRef] = useState<OrderRef>();
@@ -101,7 +101,7 @@ export function OrdersWorkspace() {
         </div>
         <div className={tradeStyles.right}>
           <PricePanel prices={prices} deployment={contracts.deployment}>
-            <TriggerSection view={history} steps={poolASteps} fired={fired} trigger={trigger} />
+            <TriggerSection view={history} steps={history.steps} fired={fired} trigger={trigger} />
           </PricePanel>
           <div ref={trackerRef} className={tradeStyles.reveal}>
             <OrderTracker

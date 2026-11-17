@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Address, Hex } from "viem";
+import type { Outcome } from "@/config/abis";
+import { opportunityId } from "@/lib/opportunity";
 import { buildLoops, buildPriceSteps, groupByTransaction, mergeLogs, summarizeLoops, toPoolLog, type PoolLog } from "./history";
 
 const POOL_A = "0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F" as Address;
@@ -9,6 +11,8 @@ const EXECUTOR = "0xb568530a915a7Ae01FBE5917E1B21d666b24DFE4" as Address;
 const TRADER = "0x1111111111111111111111111111111111111111" as Address;
 const OWNER = "0x2222222222222222222222222222222222222222" as Address;
 const POOLS = { A: POOL_A, B: POOL_B };
+const CHAIN_ID = 84_532;
+const SOURCES = { chainId: CHAIN_ID, pools: POOLS, weth: WETH, executor: EXECUTOR };
 
 const WETH_UNIT = 10n ** 18n;
 const USDC_UNIT = 10n ** 6n;
@@ -17,8 +21,27 @@ function tx(n: number): Hex {
   return `0x${n.toString(16).padStart(64, "0")}`;
 }
 
+/** The id ArbReactive gives the opportunity a ReserveUpdate log starts. */
+function opportunity(pool: "A" | "B", txHash: Hex, logIndex: number): Hex {
+  return opportunityId({ chainId: CHAIN_ID, pool: POOLS[pool], txHash, logIndex });
+}
+
 function reserves(pool: "A" | "B", txHash: Hex, blockNumber: bigint, logIndex: number, weth: bigint, usdc: bigint, initiator: Address): PoolLog {
-  return { kind: "reserves", pool, txHash, blockNumber, logIndex, initiator, reserves: { weth, usdc }, timestamp: Number(blockNumber) };
+  return {
+    kind: "reserves",
+    pool,
+    txHash,
+    blockNumber,
+    logIndex,
+    initiator,
+    reserves: { weth, usdc },
+    timestamp: Number(blockNumber),
+    opportunityId: opportunity(pool, txHash, logIndex),
+  };
+}
+
+function arbOutcome(txHash: Hex, blockNumber: bigint, logIndex: number, id: Hex, outcome: Outcome): PoolLog {
+  return { kind: "outcome", txHash, blockNumber, logIndex, opportunityId: id, outcome };
 }
 
 function swap(pool: "A" | "B", txHash: Hex, blockNumber: bigint, logIndex: number, sender: Address, wethIn: boolean, amountIn: bigint, amountOut: bigint): PoolLog {
@@ -35,6 +58,7 @@ const arbitrageLogs: PoolLog[] = [
   swap("A", tx(2), 59_976_876n, 1, EXECUTOR, false, 1_000n * USDC_UNIT, 301_750_619_426_868_600n),
   reserves("B", tx(2), 59_976_876n, 2, 99_402_186_765_000_000_000n, 301_993_363_083n, EXECUTOR),
   swap("B", tx(2), 59_976_876n, 3, EXECUTOR, true, 301_750_619_426_868_600n, 1_006_636_917n),
+  arbOutcome(tx(2), 59_976_876n, 4, opportunity("B", tx(1), 0), "Executed"),
 ];
 
 describe("toPoolLog", () => {
@@ -48,13 +72,12 @@ describe("toPoolLog", () => {
         blockNumber: 10n,
         logIndex: 3,
       },
-      POOLS,
-      WETH,
+      SOURCES,
     );
     expect(log).toEqual(swap("B", tx(1), 10n, 3, TRADER, true, 5n, 7n));
   });
 
-  it("decodes a ReserveUpdate log with its timestamp in seconds", () => {
+  it("decodes a ReserveUpdate log with its timestamp in seconds and the opportunity id it starts", () => {
     const log = toPoolLog(
       {
         address: POOL_A,
@@ -64,16 +87,27 @@ describe("toPoolLog", () => {
         blockNumber: 11n,
         logIndex: 0,
       },
-      POOLS,
-      WETH,
+      SOURCES,
     );
     expect(log).toEqual({ ...reserves("A", tx(4), 11n, 0, 1n, 2n, OWNER), timestamp: 1_794_917_242 });
   });
 
+  it("decodes the executor's ArbOutcome and ignores one from any other address", () => {
+    const raw = {
+      eventName: "ArbOutcome" as const,
+      args: { opportunityId: tx(77), outcome: 5 },
+      transactionHash: tx(5),
+      blockNumber: 12n,
+      logIndex: 2,
+    };
+    expect(toPoolLog({ ...raw, address: EXECUTOR }, SOURCES)).toEqual(arbOutcome(tx(5), 12n, 2, tx(77), "SkippedMarginGone"));
+    expect(toPoolLog({ ...raw, address: TRADER }, SOURCES)).toBeNull();
+  });
+
   it("ignores pending logs and logs from other contracts", () => {
     const base = { eventName: "Swap" as const, args: { sender: TRADER, tokenIn: WETH, amountIn: 1n, amountOut: 1n }, logIndex: 0 };
-    expect(toPoolLog({ ...base, address: TRADER, transactionHash: tx(1), blockNumber: 1n }, POOLS, WETH)).toBeNull();
-    expect(toPoolLog({ ...base, address: POOL_A, transactionHash: null, blockNumber: null }, POOLS, WETH)).toBeNull();
+    expect(toPoolLog({ ...base, address: TRADER, transactionHash: tx(1), blockNumber: 1n }, SOURCES)).toBeNull();
+    expect(toPoolLog({ ...base, address: POOL_A, transactionHash: null, blockNumber: null }, SOURCES)).toBeNull();
   });
 });
 
@@ -125,6 +159,23 @@ describe("buildLoops", () => {
     expect(buildLoops(txs, undefined, EXECUTOR, swapTime + 120)[0].verdict).toBe("no-trade");
   });
 
+  it("follows the opportunity id, not the order, when another change lands before the trade", () => {
+    const between = reserves("A", tx(3), 59_976_870n, 0, 100n * WETH_UNIT, 300_000n * USDC_UNIT, OWNER);
+    const rows = buildLoops(groupByTransaction([...userSwapLogs, between, ...arbitrageLogs]), undefined, EXECUTOR, NOW);
+    expect(rows.map((row) => [row.key, row.verdict])).toEqual([
+      [tx(3), "no-trade"],
+      [tx(1), "answered"],
+    ]);
+    expect(rows[1].answer?.afterMs).toBe(1_600);
+  });
+
+  it("records a callback that arrived and skipped, without making it a change of its own", () => {
+    const skip = arbOutcome(tx(6), 59_976_876n, 0, opportunity("B", tx(1), 0), "SkippedMarginGone");
+    const rows = buildLoops(groupByTransaction([...userSwapLogs, skip]), undefined, EXECUTOR, NOW);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ verdict: "skipped", skipped: "SkippedMarginGone", answer: null });
+  });
+
   it("keeps a trade with no change before it in the window as its own row", () => {
     const [row] = buildLoops(groupByTransaction(arbitrageLogs), undefined, EXECUTOR, NOW);
     expect(row).toMatchObject({ change: null, verdict: "unprompted" });
@@ -150,6 +201,7 @@ describe("summarizeLoops", () => {
       key: String(afterMs),
       change: null,
       answer: { afterMs } as never,
+      skipped: null,
       gapAfterChange: null,
       gapAfterAnswer: null,
       verdict: "answered" as const,
@@ -177,6 +229,12 @@ describe("buildPriceSteps", () => {
       EXECUTOR,
     );
     expect(steps[0].priceA).toBe(2_000n * USDC_UNIT);
+  });
+
+  it("draws no step for a callback that changed no reserves", () => {
+    const skip = arbOutcome(tx(6), 59_976_880n, 0, opportunity("B", tx(1), 0), "SkippedMarginGone");
+    const steps = buildPriceSteps(groupByTransaction([...userSwapLogs, skip]), undefined, 10, EXECUTOR);
+    expect(steps.map((step) => step.txHash)).toEqual([tx(1)]);
   });
 
   it("keeps only the newest steps", () => {

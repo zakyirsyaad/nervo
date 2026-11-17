@@ -138,6 +138,8 @@ function BookLine({ row, isYours, isFollowed, onFollow }: BookLineProps) {
   const owner = isYours ? "you" : shortHex(view.owner);
   const paidToken = view.tokenIn ? ORDER_TOKENS[outputToken(view.tokenIn)] : undefined;
   const badge = orderStatusBadge(view.status, view.isExpired);
+  // Cancelled, expired and refunded, or filled with the fill outside the window: nothing more will happen to it.
+  const isClosed = view.status !== "Open";
 
   return (
     <li className={`${styles.bookRow} ${isFollowed ? styles.selected : ""}`} aria-current={isFollowed ? "true" : undefined}>
@@ -175,7 +177,11 @@ function BookLine({ row, isYours, isFollowed, onFollow }: BookLineProps) {
         {outcome?.outcome === "Filled" && paidToken ? (
           <span className="num">{formatToken(outcome.amountOut, paidToken)}</span>
         ) : (
-          <span className="small muted">{outcome ? OUTCOME_TEXT[outcome.outcome].title : "Not yet"}</span>
+          <>
+            {/* The order's state now comes first: a skipped attempt does not mean it is still waiting. */}
+            <span className={`small ${isClosed ? badge.tone : "muted"}`}>{isClosed ? badge.label : outcome ? "Not filled yet" : "Not yet"}</span>
+            {outcome ? <span className="small faint">Last attempt: {OUTCOME_TEXT[outcome.outcome].title}</span> : null}
+          </>
         )}
       </Cell>
       <Cell label="Time to fill">
@@ -185,7 +191,7 @@ function BookLine({ row, isYours, isFollowed, onFollow }: BookLineProps) {
             <span className={chart.answerUnit}>to fill</span>
           </span>
         ) : (
-          <span className="small muted">{outcome ? "Did not fill" : "Waiting"}</span>
+          <span className="small muted">{isClosed ? "Did not fill" : "Waiting"}</span>
         )}
       </Cell>
       <Cell label="Proof">

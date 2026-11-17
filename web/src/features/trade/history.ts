@@ -2,9 +2,11 @@
 // Everything here is pure; useHistory reads the logs from Base Sepolia.
 
 import type { Address, Hex } from "viem";
+import { OUTCOMES, type Outcome } from "@/config/abis";
 import { BASE_SEPOLIA_BLOCK_TIME_MS } from "@/config/chains";
 import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS } from "@/config/contracts";
 import { bestRoute, gapBps, spotPriceUsdc, type Reserves } from "@/lib/amm";
+import { opportunityId } from "@/lib/opportunity";
 
 export type PoolKey = "A" | "B";
 
@@ -12,13 +14,15 @@ export const POOL_KEYS: readonly PoolKey[] = ["A", "B"];
 
 // The executor drops a callback older than 60 seconds, so a trade never answers a change older than that.
 const FOLLOW_UP_WINDOW_SECONDS = 60;
-const FOLLOW_UP_WINDOW_BLOCKS = BigInt((FOLLOW_UP_WINDOW_SECONDS * 1000) / BASE_SEPOLIA_BLOCK_TIME_MS);
 
-interface LogPosition {
-  readonly pool: PoolKey;
+interface LogAt {
   readonly txHash: Hex;
   readonly blockNumber: bigint;
   readonly logIndex: number;
+}
+
+interface LogPosition extends LogAt {
+  readonly pool: PoolKey;
 }
 
 export interface SwapLog extends LogPosition {
@@ -35,15 +39,26 @@ export interface ReservesLog extends LogPosition {
   readonly reserves: Reserves;
   /** Block time in seconds, as the pool recorded it. */
   readonly timestamp: number;
+  /** The id ArbReactive gives the opportunity this log starts, keccak256(abi.encode(chainId, pool, tx, index)). */
+  readonly opportunityId: Hex;
 }
 
-export type PoolLog = SwapLog | ReservesLog;
+/** ArbExecutor's record of what it did with one callback, keyed by the opportunity that asked for it. */
+export interface OutcomeLog extends LogAt {
+  readonly kind: "outcome";
+  readonly opportunityId: Hex;
+  readonly outcome: Outcome;
+}
+
+export type PoolLog = SwapLog | ReservesLog | OutcomeLog;
 
 /** The fields of a viem log this module reads. */
 export interface RawPoolLog {
   readonly address: Address;
-  readonly eventName: "Swap" | "ReserveUpdate";
+  readonly eventName: "Swap" | "ReserveUpdate" | "ArbOutcome";
   readonly args: {
+    readonly opportunityId?: Hex;
+    readonly outcome?: number;
     readonly sender?: Address;
     readonly tokenIn?: Address;
     readonly recipient?: Address;
@@ -64,12 +79,28 @@ export function sameAddress(left: string | undefined, right: string | undefined)
   return left !== undefined && right !== undefined && left.toLowerCase() === right.toLowerCase();
 }
 
-/** Decodes one pool log. Null for pending logs, other contracts, or missing fields. */
-export function toPoolLog(log: RawPoolLog, pools: Readonly<Record<PoolKey, Address>>, weth: Address): PoolLog | null {
-  const pool = POOL_KEYS.find((key) => sameAddress(pools[key], log.address));
-  if (!pool || log.transactionHash === null || log.blockNumber === null || log.logIndex === null) return null;
-  const position = { pool, txHash: log.transactionHash, blockNumber: log.blockNumber, logIndex: log.logIndex };
+export interface LogSources {
+  readonly chainId: number;
+  readonly pools: Readonly<Record<PoolKey, Address>>;
+  readonly weth: Address;
+  readonly executor: Address;
+}
+
+/** Decodes one pool or executor log. Null for pending logs, other contracts, or missing fields. */
+export function toPoolLog(log: RawPoolLog, { chainId, pools, weth, executor }: LogSources): PoolLog | null {
+  if (log.transactionHash === null || log.blockNumber === null || log.logIndex === null) return null;
+  const at = { txHash: log.transactionHash, blockNumber: log.blockNumber, logIndex: log.logIndex };
   const { args } = log;
+
+  if (log.eventName === "ArbOutcome") {
+    const outcome = args.outcome === undefined ? undefined : OUTCOMES[args.outcome];
+    if (!sameAddress(log.address, executor) || !args.opportunityId || !outcome) return null;
+    return { kind: "outcome", ...at, opportunityId: args.opportunityId, outcome };
+  }
+
+  const pool = POOL_KEYS.find((key) => sameAddress(pools[key], log.address));
+  if (!pool) return null;
+  const position = { pool, ...at };
 
   if (log.eventName === "Swap") {
     if (!args.sender || !args.tokenIn || args.amountIn === undefined || args.amountOut === undefined) return null;
@@ -82,6 +113,7 @@ export function toPoolLog(log: RawPoolLog, pools: Readonly<Record<PoolKey, Addre
     initiator: args.initiator,
     reserves: { weth: args.reserveWeth, usdc: args.reserveUsdc },
     timestamp: Number(args.timestamp),
+    opportunityId: opportunityId({ chainId, pool: pools[pool], txHash: at.txHash, logIndex: at.logIndex }),
   };
 }
 
@@ -120,6 +152,10 @@ export interface PoolTx {
   readonly after: Partial<Record<PoolKey, Reserves>>;
   /** Reserves before the transaction, for pools whose single swap lets us work them out. */
   readonly before: Partial<Record<PoolKey, Reserves>>;
+  /** Opportunities this transaction's reserve changes start, one per ReserveUpdate. */
+  readonly opportunityIds: readonly Hex[];
+  /** What the executor did with each callback it handled in this transaction. */
+  readonly outcomes: readonly { readonly opportunityId: Hex; readonly outcome: Outcome }[];
 }
 
 function reservesBeforeSwap(after: Reserves, swap: SwapLog): Reserves {
@@ -131,6 +167,7 @@ function reservesBeforeSwap(after: Reserves, swap: SwapLog): Reserves {
 function toPoolTx(logs: readonly PoolLog[]): PoolTx {
   const swaps = logs.filter((log): log is SwapLog => log.kind === "swap");
   const updates = logs.filter((log): log is ReservesLog => log.kind === "reserves");
+  const outcomes = logs.filter((log): log is OutcomeLog => log.kind === "outcome");
   const after: Partial<Record<PoolKey, Reserves>> = {};
   const before: Partial<Record<PoolKey, Reserves>> = {};
 
@@ -150,6 +187,8 @@ function toPoolTx(logs: readonly PoolLog[]): PoolTx {
     swaps: swaps.map(({ pool, sender, wethIn, amountIn, amountOut }) => ({ pool, sender, wethIn, amountIn, amountOut })),
     after,
     before,
+    opportunityIds: updates.map((log) => log.opportunityId),
+    outcomes: outcomes.map(({ opportunityId: id, outcome }) => ({ opportunityId: id, outcome })),
   };
 }
 
@@ -189,16 +228,19 @@ export interface Answer {
 }
 
 /**
- * answered: the contract traded after the change. too-small: the gap could not pay the fees plus the 2 USDC floor,
- * so no trade was due. waiting: a trade may still come. no-trade: none came within the callback deadline.
- * unprompted: a trade with no change before it in the window.
+ * answered: the contract traded for this change. skipped: the contract's callback for it arrived and it chose not to
+ * trade. too-small: the gap could not pay the fees plus the 2 USDC floor, so no trade was due. waiting: a trade may
+ * still come. no-trade: nothing came within the callback deadline. unprompted: a trade whose change is outside the
+ * window.
  */
-export type Verdict = "answered" | "too-small" | "waiting" | "no-trade" | "unprompted";
+export type Verdict = "answered" | "skipped" | "too-small" | "waiting" | "no-trade" | "unprompted";
 
 export interface LoopRow {
   readonly key: string;
   readonly change: Change | null;
   readonly answer: Answer | null;
+  /** Why the contract did not trade, when its callback for this change arrived and it skipped. */
+  readonly skipped: Outcome | null;
   /** Pool B against Pool A in basis points, right after the change and right after the answer. */
   readonly gapAfterChange: number | null;
   readonly gapAfterAnswer: number | null;
@@ -271,9 +313,15 @@ function isRoundTrip(tx: PoolTx, executor: Address): boolean {
   return sameAddress(tx.actor, executor) && tx.swaps.length === 2 && !buy.wethIn && sell.wethIn;
 }
 
+/** True when the transaction changed a pool's reserves (an executor skip changes nothing). */
+function changesReserves(tx: PoolTx): boolean {
+  return POOL_KEYS.some((pool) => tx.after[pool] !== undefined);
+}
+
 interface OpenRow {
   readonly change: Change | null;
   readonly answer: Answer | null;
+  readonly skipped: Outcome | null;
   readonly gapAfterChange: number | null;
   readonly gapAfterAnswer: number | null;
   readonly tradable: boolean | null;
@@ -281,31 +329,54 @@ interface OpenRow {
 
 function verdictOf(row: OpenRow, nowSeconds: number): Verdict {
   if (row.answer) return row.change ? "answered" : "unprompted";
+  if (row.skipped) return "skipped";
   if (row.tradable === false) return "too-small";
   const age = row.change?.timestamp === undefined ? Infinity : nowSeconds - row.change.timestamp;
   return age <= FOLLOW_UP_WINDOW_SECONDS ? "waiting" : "no-trade";
 }
 
 /**
- * Pairs every change with the contract's trade that followed it, newest first. The contract answers the latest
- * state, so a trade belongs to the change right before it, if that change came within the callback deadline.
+ * Pairs every change with what the contract did about it, newest first. The pairing follows ids, not order: the
+ * executor's ArbOutcome names the opportunity it handled, which is the ReserveUpdate log that started it.
  */
 export function buildLoops(txs: readonly PoolTx[], live: PoolState | undefined, executor: Address, nowSeconds: number): LoopRow[] {
   const { after } = replay(txs, live);
   const rows: OpenRow[] = [];
+  const rowByOpportunity = new Map<Hex, number>();
 
   txs.forEach((tx, index) => {
-    if (!isRoundTrip(tx, executor)) {
-      rows.push({ change: toChange(tx), answer: null, gapAfterChange: gapOf(after[index]), gapAfterAnswer: null, tradable: isTradable(after[index]) });
+    if (changesReserves(tx) && !isRoundTrip(tx, executor)) {
+      const rowIndex =
+        rows.push({
+          change: toChange(tx),
+          answer: null,
+          skipped: null,
+          gapAfterChange: gapOf(after[index]),
+          gapAfterAnswer: null,
+          tradable: isTradable(after[index]),
+        }) - 1;
+      for (const id of tx.opportunityIds) rowByOpportunity.set(id, rowIndex);
       return;
     }
-    const last = rows.at(-1);
-    const canAnswer = last?.change && !last.answer && tx.blockNumber - last.change.blockNumber <= FOLLOW_UP_WINDOW_BLOCKS;
-    if (last && canAnswer) {
-      rows[rows.length - 1] = { ...last, answer: toAnswer(tx, last.change?.blockNumber), gapAfterAnswer: gapOf(after[index]) };
+
+    if (isRoundTrip(tx, executor)) {
+      const executed = tx.outcomes.find((item) => item.outcome === "Executed");
+      const source = executed ? rowByOpportunity.get(executed.opportunityId) : undefined;
+      const row = source === undefined ? undefined : rows[source];
+      if (source !== undefined && row && !row.answer) {
+        rows[source] = { ...row, answer: toAnswer(tx, row.change?.blockNumber), gapAfterAnswer: gapOf(after[index]) };
+        return;
+      }
+      rows.push({ change: null, answer: toAnswer(tx, undefined), skipped: null, gapAfterChange: null, gapAfterAnswer: gapOf(after[index]), tradable: null });
       return;
     }
-    rows.push({ change: null, answer: toAnswer(tx, undefined), gapAfterChange: null, gapAfterAnswer: gapOf(after[index]), tradable: null });
+
+    // A callback that arrived and did not trade: it changed nothing, but says which change it was for.
+    for (const item of tx.outcomes) {
+      const source = rowByOpportunity.get(item.opportunityId);
+      const row = source === undefined ? undefined : rows[source];
+      if (source !== undefined && row && !row.answer && !row.skipped) rows[source] = { ...row, skipped: item.outcome };
+    }
   });
 
   return rows
@@ -313,6 +384,7 @@ export function buildLoops(txs: readonly PoolTx[], live: PoolState | undefined, 
       key: row.change?.txHash ?? row.answer?.txHash ?? "",
       change: row.change,
       answer: row.answer,
+      skipped: row.skipped,
       gapAfterChange: row.gapAfterChange,
       gapAfterAnswer: row.gapAfterAnswer,
       verdict: verdictOf(row, nowSeconds),
@@ -369,5 +441,6 @@ export function buildPriceSteps(txs: readonly PoolTx[], live: PoolState | undefi
       priceA: priceOf(after[index].A),
       priceB: priceOf(after[index].B),
     }))
+    .filter((step) => step.touches.length > 0)
     .slice(-maxSteps);
 }
