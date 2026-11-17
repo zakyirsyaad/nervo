@@ -14,7 +14,7 @@ The same loop also protects positions. A user places a stop-loss, take-profit or
 
 | | |
 |---|---|
-| Median latency, swap to callback | **1.4 s** (p95 2.0 s, 12 of 12 callbacks arrived) |
+| Median latency, swap to callback | **1.6 s** (p95 2.0 s, 73 of 73 callbacks arrived) |
 | Destination fees saved by filtering on Lasna | **56%**, with the same 3 trades executed |
 | Protective orders, trigger to fill | **1.8 s** median over 10 stop-losses (p95 2.6 s, 10 of 10 filled) on Unichain, triggered by the Base price ([details](#protective-orders)) |
 | Contracts | 4 core contracts, 3 test fixtures, 157 Foundry tests including invariants |
@@ -157,19 +157,20 @@ Doing the filtering on Lasna is also what makes it cheap. Lasna charges per log 
 
 ### Latency
 
-From the block of the trigger swap to the block of the callback, both on Base Sepolia, measured 16 November 2026:
+From the block of the trigger swap to the block of the callback, both on Base Sepolia. Every callback the main stack requested from its deploy on 15 November to 17 November 2026 is included:
 
-| Callbacks requested | Arrived | Timed out | p50 | p95 | Min | Max |
-|---|---|---|---|---|---|---|
-| 12 | 12 | 0 | 1,400 ms | 2,000 ms | 1,000 ms | 2,000 ms |
+| Samples | Callbacks requested | Arrived | Timed out | p50 | p95 | Min | Max |
+|---|---|---|---|---|---|---|---|
+| All, 15 to 17 November | 73 | 73 | 0 | 1,600 ms | 2,000 ms | 800 ms | 3,600 ms |
+| Benchmark run, 17 November | 50 | 50 | 0 | 1,600 ms | 2,000 ms | 800 ms | 3,200 ms |
 
-- 2 samples come from the demo scenarios and 10 from [tools/bench_trader.py](tools/bench_trader.py), which sends one swap opening a 2% gap about every 18 seconds.
-- Outcomes: 11 `Executed`, 1 `SkippedMarginGone`.
+- 63 samples come from [tools/bench_trader.py](tools/bench_trader.py), which sends one swap opening a 2% gap about every 18 seconds: 13 on 16 November and 50 in one run on 17 November. The other 10 come from swaps sent by the deployer wallet on 15, 16 and 17 November, including the demo scenarios.
+- Outcomes: 71 `Executed`, 2 `SkippedMarginGone`. All 50 callbacks of the 17 November run were `Executed`.
+- 71 of the 73 callbacks arrived within 2.0 s. The other two took 3.2 s and 3.6 s.
 - Latency is the difference of `blockTimestampMs` between two Base Sepolia blocks, so both ends use the same chain's clock. Base Sepolia stamps blocks every 200 ms, which is the resolution of every number above. Lasna block timestamps are not comparable and are not used.
-- With 12 samples, nearest-rank p95 equals the maximum. This does not describe the tail of the distribution.
-- `react()` cost about 0.049 lREACT per sample (three logs: the trigger swap and the executor's two swaps).
+- `react()` cost about 0.049 lREACT per sample (three logs: the trigger swap and the executor's two swaps). The 50-sample run used 2.44 lREACT.
 
-Per-sample data with the hashes of all three stages: [evidence/latency-2026-11-16.json](evidence/latency-2026-11-16.json).
+Per-sample data with the hashes of all three stages: [evidence/latency-2026-11-17.json](evidence/latency-2026-11-17.json). The earlier 12-sample result is kept in [evidence/latency-2026-11-16.json](evidence/latency-2026-11-16.json).
 
 ### Filtering on Lasna versus sending every candidate
 
@@ -205,7 +206,7 @@ Not on the markets we tested. We replayed 72 hours of mainnet swaps (11–13 Nov
 - **On one chain**, arbitrage is settled inside the block by searchers who trade right behind the swap that opened the gap. Long-tail pairs have wider, longer-lived gaps, but they stay inside the pools' combined fees (up to 125 bps), so there is nothing to trade.
 - **Across chains**, where no one can settle both legs in one block, Base and Unichain still track each other within 1.6 bps at the median. The gap exceeded the combined fee for 0.08% of the time, and no gap lasted longer than 2 seconds.
 
-A loop that acts 1.4 to 2 seconds after the signal cannot win these races. So the testnet results prove the mechanism, the integration and the latency, not a market edge. The same data shows why both halves of the design matter: the Lasna filter avoids paying for callbacks that would be rejected, and the executor's re-check stops a late callback from trading at a loss. Method, per-pair tables and assumptions: [replay/README.md](replay/README.md).
+A loop that acts 1.6 to 2 seconds after the signal cannot win these races. So the testnet results prove the mechanism, the integration and the latency, not a market edge. The same data shows why both halves of the design matter: the Lasna filter avoids paying for callbacks that would be rejected, and the executor's re-check stops a late callback from trading at a loss. Method, per-pair tables and assumptions: [replay/README.md](replay/README.md).
 
 ## On-chain proof
 
@@ -376,7 +377,8 @@ See [docs/reproduce.md](docs/reproduce.md) for deploying both stacks, running th
 ## Limitations
 
 - **Testnet fixtures.** The pools are simple constant-product pools with test tokens we control. They demonstrate the loop, not a market.
-- **Small samples.** Latency rests on 12 callbacks and the comparison on one run of 12 steps per stack. The two stacks did not start from identical pool sizes (about 96.5 WETH / 311,000 USDC versus 100 / 300,000).
+- **One kind of trigger.** Latency rests on 73 callbacks, but 63 of them come from the same benchmark trader opening the same 2% gap, so they measure one workload on a quiet testnet.
+- **Small comparison sample.** The filter comparison rests on one run of 12 steps per stack. The two stacks did not start from identical pool sizes (about 96.5 WETH / 311,000 USDC versus 100 / 300,000).
 - **200 ms resolution.** Latency comes from Base Sepolia block timestamps, so differences below one block are invisible.
 - **Fixed trade size.** Each opportunity trades 1,000 USDC regardless of the gap, so a large gap is closed only partly per round.
 - **No market edge on the markets tested.** Ten pairs on Base and ETH/USDC between Base and Unichain, replayed on mainnet; almost no gap stayed open long enough for a seconds-scale loop. See the replay above.
