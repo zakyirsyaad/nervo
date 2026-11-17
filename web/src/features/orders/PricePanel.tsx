@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { gapBps, spotPriceUsdc } from "@/lib/amm";
 import { formatPercent, PENDING_TEXT } from "@/lib/format";
 import { FeedStatus, MarketCell } from "../trade/MarketPanel";
@@ -8,9 +9,11 @@ import type { OrderPrices } from "./useOrderPrices";
 interface PricePanelProps {
   prices: OrderPrices;
   deployment: Deployment;
+  /** Drawn under the price cells, inside the same panel: the price chart. */
+  children?: ReactNode;
 }
 
-export function PricePanel({ prices, deployment }: PricePanelProps) {
+export function PricePanel({ prices, deployment, children }: PricePanelProps) {
   const basePrice = prices.base ? spotPriceUsdc(prices.base) : undefined;
   const unichainPrice = prices.unichain ? spotPriceUsdc(prices.unichain) : undefined;
   const gap = basePrice !== undefined && unichainPrice !== undefined ? gapBps(unichainPrice, basePrice) : undefined;
@@ -52,6 +55,7 @@ export function PricePanel({ prices, deployment }: PricePanelProps) {
         Your order watches the price on Base, but trades on Unichain&apos;s own pool. The two prices can differ a
         little, which is why you also set the least you are willing to receive.
       </p>
+      {children}
     </div>
   );
 }

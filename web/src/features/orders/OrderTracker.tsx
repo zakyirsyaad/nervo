@@ -20,6 +20,10 @@ const NEEDS_CANCEL: readonly TrailKind[] = ["not-watched", "stopped", "expired-o
 
 interface OrderTrackerProps {
   order: OrderRef | undefined;
+  /** False when following an order from the book that this wallet did not place. */
+  isOwn: boolean;
+  /** Short address of the order's owner, shown when it is not the viewer. */
+  ownerLabel: string | undefined;
   trail: OrderTrailView;
   canCancel: boolean;
   isCancelling: boolean;
@@ -27,7 +31,7 @@ interface OrderTrackerProps {
   onCancel: () => void;
 }
 
-export function OrderTracker({ order, trail, canCancel, isCancelling, cancelError, onCancel }: OrderTrackerProps) {
+export function OrderTracker({ order, isOwn, ownerLabel, trail, canCancel, isCancelling, cancelError, onCancel }: OrderTrackerProps) {
   const isReading = Boolean(order) && trail.isLoading;
   const status = order && !isReading ? trail.status : IDLE_STATUS;
   const input: TrackerInput = {
@@ -37,6 +41,7 @@ export function OrderTracker({ order, trail, canCancel, isCancelling, cancelErro
     isLasnaPartial: trail.snapshot?.isLasnaPartial ?? false,
     isUnichainPartial: trail.snapshot?.isUnichainPartial ?? false,
     status,
+    isOwn,
   };
   const isLive = Boolean(order) && !isReading;
   const placed = placedText(input);
@@ -47,7 +52,10 @@ export function OrderTracker({ order, trail, canCancel, isCancelling, cancelErro
   return (
     <div className="panel">
       <div className="panel-head label">
-        <span>Order tracker{order ? ` · #${order.id}` : ""}</span>
+        <span>
+          Order tracker{order ? ` · #${order.id}` : ""}
+          {order && !isOwn && ownerLabel ? ` · placed by ${ownerLabel}` : ""}
+        </span>
         <span role="status" className={isLive ? status.tone : undefined}>
           {!order ? "Waiting for an order" : isReading ? "Reading the chains…" : status.label}
         </span>
@@ -65,6 +73,7 @@ export function OrderTracker({ order, trail, canCancel, isCancelling, cancelErro
           kind={status.kind}
           stopReason={stopReason(trail)}
           canCancel={canCancel}
+          isOwn={isOwn}
           isCancelling={isCancelling}
           onCancel={onCancel}
           onKeepWaiting={trail.keepWaiting}
@@ -77,7 +86,7 @@ export function OrderTracker({ order, trail, canCancel, isCancelling, cancelErro
         </p>
       ) : null}
       <p className="panel-row small faint">
-        Step 4 times the trip from the Base Sepolia block whose price fired your order to the Unichain Sepolia block
+        Step 4 times the trip from the Base Sepolia block whose price fired the order to the Unichain Sepolia block
         that filled it. It is counted in whole seconds, because Unichain records block times in whole seconds.
       </p>
     </div>
@@ -101,6 +110,7 @@ interface StalledRowProps {
   kind: TrailKind;
   stopReason: string | undefined;
   canCancel: boolean;
+  isOwn: boolean;
   isCancelling: boolean;
   onCancel: () => void;
   onKeepWaiting: () => void;
@@ -108,11 +118,12 @@ interface StalledRowProps {
 }
 
 /** What to do when the order stopped without filling: wait, retry, or cancel to get the tokens back. */
-function StalledRow({ kind, stopReason, canCancel, isCancelling, onCancel, onKeepWaiting, onRetry }: StalledRowProps) {
+function StalledRow({ kind, stopReason, canCancel, isOwn, isCancelling, onCancel, onKeepWaiting, onRetry }: StalledRowProps) {
+  const your = isOwn ? "your" : "the";
   if (kind === "mirror-timeout") {
     return (
       <Stalled
-        message="Reactive has not picked up your order after a minute. It may be out of the funds it needs to run. Your tokens are safe in the order book, and you can cancel at any time."
+        message={`Reactive has not picked up ${your} order after a minute. It may be out of the funds it needs to run. The tokens are safe in the order book, and ${isOwn ? "you" : "the owner"} can cancel at any time.`}
         action={{ label: "Keep waiting", onClick: onKeepWaiting }}
       />
     );
@@ -120,16 +131,17 @@ function StalledRow({ kind, stopReason, canCancel, isCancelling, onCancel, onKee
   if (kind === "error") {
     return (
       <Stalled
-        message="We lost the connection while following your order. Your order is safe and keeps working without this page."
+        message={`We lost the connection while following ${your} order. The order is safe and keeps working without this page.`}
         action={{ label: "Try again", onClick: onRetry }}
       />
     );
   }
   if (!NEEDS_CANCEL.includes(kind)) return null;
   const message = kind === "stopped" && stopReason ? stopReason : CANCEL_NOTE;
+  const notYours = isOwn ? `${message} Connect the wallet that placed it to cancel.` : "Only the wallet that placed this order can cancel it.";
   return (
     <Stalled
-      message={canCancel ? message : `${message} Connect the wallet that placed it to cancel.`}
+      message={canCancel ? message : notYours}
       action={canCancel ? { label: isCancelling ? "Cancelling…" : "Cancel and get tokens back", onClick: onCancel, isDisabled: isCancelling } : undefined}
     />
   );

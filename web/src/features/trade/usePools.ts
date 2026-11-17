@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useReadContracts } from "wagmi";
 import { poolAbi } from "@/config/abis";
 import { originChain } from "@/config/chains";
@@ -26,13 +27,11 @@ export function usePools(): PoolsQuery {
     query: { refetchInterval: POLL_INTERVAL_MS },
   });
 
-  if (!data) return { pools: undefined, isError };
-  const [reservesA, reservesB] = data;
-  return {
-    isError,
-    pools: {
-      A: { weth: reservesA[0], usdc: reservesA[1] },
-      B: { weth: reservesB[0], usdc: reservesB[1] },
-    },
-  };
+  // wagmi keeps `data` the same object while the reserves do not change, so this holds between polls.
+  const pools = useMemo(() => {
+    if (!data) return undefined;
+    const [reservesA, reservesB] = data;
+    return { A: { weth: reservesA[0], usdc: reservesA[1] }, B: { weth: reservesB[0], usdc: reservesB[1] } };
+  }, [data]);
+  return { pools, isError };
 }

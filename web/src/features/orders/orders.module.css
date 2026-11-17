@@ -89,3 +89,191 @@
   gap: 12px;
   padding: 24px;
 }
+
+/* Price chart: the price every order watches, the followed order's trigger and the changes that fired orders. */
+.priceLine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.triggerLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--accent);
+  pointer-events: none;
+}
+
+.triggerLabel {
+  position: absolute;
+  right: 0;
+  transform: translateY(-100%);
+  padding: 0 6px;
+  background: var(--bg-100);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+/* Filled dot with a surface ring so it reads on top of the line. */
+.fireDot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 999px;
+  background: var(--series-a);
+  border: 2px solid var(--bg-100);
+  pointer-events: none;
+}
+
+.fireLabel {
+  position: absolute;
+  transform: translate(-50%, 10px);
+  color: var(--ink-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* A price beyond the chart's range is drawn on the edge; a short tick past the edge says it went further. */
+.clipMark {
+  position: absolute;
+  width: 0;
+  height: 8px;
+  margin-left: -1px;
+  border-left: 2px dotted var(--ink-faint);
+  pointer-events: none;
+}
+
+.clipAbove {
+  top: -10px;
+}
+
+.clipBelow {
+  bottom: -10px;
+}
+
+.keyPrice,
+.keyTrigger {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  border-top: 2px solid var(--ink);
+}
+
+.keyTrigger {
+  border-top: 2px dashed var(--accent);
+}
+
+.keyFired {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--series-a);
+}
+
+/* The order book. Stacked on narrow panels, a table with a header row on wide ones. */
+.book {
+  container-type: inline-size;
+}
+
+.bookRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "order what"
+    "fired paid"
+    "time time"
+    "proof proof";
+  gap: 12px 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.list > .bookRow:last-child {
+  border-bottom: 0;
+}
+
+.bookRow.selected {
+  background: var(--accent-dim);
+}
+
+/* ink-faint is 4.4:1 on the tint; ink-muted keeps small text above 4.5:1. */
+.bookRow.selected :global(.faint),
+.bookRow.selected .followButton span {
+  color: var(--ink-muted);
+}
+
+.bookHead {
+  display: none;
+}
+
+.bookRow > :nth-child(1) {
+  grid-area: order;
+}
+
+.bookRow > :nth-child(2) {
+  grid-area: what;
+}
+
+.bookRow > :nth-child(3) {
+  grid-area: fired;
+}
+
+.bookRow > :nth-child(4) {
+  grid-area: paid;
+}
+
+.bookRow > :nth-child(5) {
+  grid-area: time;
+}
+
+.bookRow > :nth-child(6) {
+  grid-area: proof;
+}
+
+/* Stacked rows lose the header, so the two bare numbers get a caption; the header row replaces it when wide. */
+.narrowLabel {
+  display: block;
+}
+
+@container (min-width: 820px) {
+  .narrowLabel {
+    display: none;
+  }
+
+  .bookRow {
+    grid-template-columns: 84px minmax(0, 1.4fr) 120px 128px minmax(0, 1fr) 160px;
+    grid-template-areas: "order what fired paid time proof";
+    gap: 24px;
+    align-items: start;
+  }
+
+  .bookHead {
+    display: grid;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+/* The order number doubles as the control that points the tracker at this order. */
+.followButton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 24px;
+  text-align: left;
+}
+
+.followButton:hover {
+  color: var(--accent);
+}

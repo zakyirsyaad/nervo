@@ -2,7 +2,7 @@
  * Arb Loop tokens, and why they are what they are.
  * Dark only: this is a trading screen, so prices and the live timeline should be the brightest things on it.
  * Colour: greys carry the text and one blue accent marks links and the step in progress. Any other colour
- *   on the page comes from a chain's own logo.
+ *   on the page comes from a chain's own logo, except the price chart's two lines, which need one hue per pool.
  * Type: Inter for reading, with tabular figures for prices. Geist Mono only for values copied from a chain:
  *   hashes, addresses, event names, block numbers and typed amounts.
  * Chain logo: every step of the loop runs on a named chain, and its logo says which at a glance.
@@ -23,6 +23,9 @@
   --ok: #7ee2a8;
   --warn: #e5a13a;
   --danger: #ff6369;
+  /* Pool A and Pool B lines. Validated for colour-blind separation and 3:1 contrast on the dark surface. */
+  --series-a: #3987e5;
+  --series-b: #d2793c;
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;

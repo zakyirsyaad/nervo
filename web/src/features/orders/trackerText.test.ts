@@ -86,3 +86,12 @@ describe("tracker step texts", () => {
     expect(text.detail).toMatch(/Cancel the order to get them back/);
   });
 });
+
+describe("wording for someone else's order", () => {
+  test("says the order, not your order", () => {
+    const others = { ...input({}), isOwn: false };
+    expect(placedText(others).detail).toContain("until the trigger is reached or the owner cancels");
+    expect(mirrorText(others).title).not.toContain("your");
+    expect(triggerText(others).detail).not.toContain("your");
+  });
+});

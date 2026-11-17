@@ -1,15 +1,24 @@
-import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS, USDC_DECIMALS } from "@/config/contracts";
-import { bestRoute, gapBps, spotPriceUsdc } from "@/lib/amm";
-import { formatAmount, formatPercent, PENDING_TEXT } from "@/lib/format";
+import type { ReactNode } from "react";
+import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS, USDC_DECIMALS, WETH_DECIMALS } from "@/config/contracts";
+import { bestRoute, gapBps, spotPriceUsdc, type Reserves } from "@/lib/amm";
+import { formatAmount, formatCompact, formatPercent, PENDING_TEXT } from "@/lib/format";
 import type { PoolPair } from "./quote";
 import styles from "./trade.module.css";
+
+/** What a pool holds, e.g. "Holds 100 WETH and 300,000 USDC". */
+function holdingsText(reserves: Reserves | undefined): string | undefined {
+  if (!reserves) return undefined;
+  return `Holds ${formatCompact(reserves.weth, WETH_DECIMALS, 2)} WETH and ${formatAmount(reserves.usdc, USDC_DECIMALS, 0)} USDC`;
+}
 
 interface MarketPanelProps {
   pools: PoolPair | undefined;
   isError: boolean;
+  /** Drawn under the price cells, inside the same panel: the gap chart. */
+  children?: ReactNode;
 }
 
-export function MarketPanel({ pools, isError }: MarketPanelProps) {
+export function MarketPanel({ pools, isError, children }: MarketPanelProps) {
   const priceA = pools ? spotPriceUsdc(pools.A) : undefined;
   const priceB = pools ? spotPriceUsdc(pools.B) : undefined;
   const gap = priceA !== undefined && priceB !== undefined ? gapBps(priceB, priceA) : undefined;
@@ -30,11 +39,13 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
           label="Price on Pool A"
           value={priceA === undefined ? undefined : formatAmount(priceA, USDC_DECIMALS, 2)}
           pendingText={pendingText}
+          note={holdingsText(pools?.A)}
         />
         <MarketCell
           label="Price on Pool B"
           value={priceB === undefined ? undefined : formatAmount(priceB, USDC_DECIMALS, 2)}
           pendingText={pendingText}
+          note={holdingsText(pools?.B)}
         />
         <MarketCell
           label="Difference"
@@ -49,6 +60,7 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
           unit="USDC profit"
         />
       </div>
+      {children}
     </div>
   );
 }
@@ -77,11 +89,13 @@ interface MarketCellProps {
   value: string | undefined;
   pendingText?: string;
   unit?: string;
+  /** A line under the value, e.g. what the pool holds. */
+  note?: string;
   tone?: "ok";
 }
 
 /** One price cell, shared with the order page's price panel. */
-export function MarketCell({ label, value, pendingText = PENDING_TEXT.loading, unit, tone }: MarketCellProps) {
+export function MarketCell({ label, value, pendingText = PENDING_TEXT.loading, unit, note, tone }: MarketCellProps) {
   return (
     <div className={`cell ${styles.marketCell}`}>
       <span className="small muted">{label}</span>
@@ -92,6 +106,7 @@ export function MarketCell({ label, value, pendingText = PENDING_TEXT.loading, u
           {value} {unit ? <span className={styles.marketUnit}>{unit}</span> : null}
         </span>
       )}
+      {note ? <span className="small faint num">{note}</span> : null}
     </div>
   );
 }
