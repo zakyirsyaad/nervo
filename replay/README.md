@@ -1,6 +1,6 @@
 # Market replay on Base mainnet
 
-Answers the market validation question: how many arbitrage episodes between two real pools are still viable 1, 2 and 5 seconds after the signal. The testnet loop acts 1.4 s after the signal at the median and 2.0 s at p95, so the +2 s column is the one that matters.
+Answers the market validation question: how many arbitrage episodes between two real pools are still viable 1, 2 and 5 seconds after the signal. The testnet loop acts 1.6 s after the signal at the median and 2.0 s at p95 (73 callbacks), so the +2 s column is the one that matters.
 
 The replay ran first on WETH/USDC, then on nine more pairs to check whether WETH/USDC is a special case, and finally on ETH/USDC across two chains, Base and Unichain. In every case the gaps close within about a second.
 
@@ -98,7 +98,7 @@ The testnet results prove the mechanism, the integration and the latency. The re
 - **Liquidity changes between swaps** (mint and burn) only become visible at the next swap in that pool.
 - **Gas and callback costs are not subtracted.** The surplus threshold stands in for those costs.
 - **Time comes from block timestamps** (`blockTimestampMs`), not from a single observer.
-- **Delay is counted from the signal block.** The measured testnet loop takes 1.4 s at the median and 2.0 s at p95 from the trigger block to the callback block.
+- **Delay is counted from the signal block.** The measured testnet loop takes 1.6 s at the median and 2.0 s at p95 from the trigger block to the callback block, over 73 callbacks.
 - One 72-hour window; WETH fell 4.5% during it. On Base, Uniswap V4 pools and Aerodrome's classic (non-concentrated) pools are not covered. Across chains, only the busiest pool on each side is compared, and Unichain timestamps have one-second resolution.
 
 ## Re-running

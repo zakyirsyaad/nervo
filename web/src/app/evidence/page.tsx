@@ -25,8 +25,14 @@ export const metadata: Metadata = { title: "Evidence" };
 
 const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
 const BUCKETS = histogram(LATENCIES_MS, BLOCK_INTERVAL_MS);
+// Beyond this many duration labels the axis text runs together, so only every n-th bucket is labelled,
+// counted back from the slowest bucket so the tail always has a label.
+const MAX_AXIS_LABELS = 8;
+const AXIS_LABEL_STEP = Math.max(1, Math.ceil(BUCKETS.length / MAX_AXIS_LABELS));
 const MAX_COUNT = Math.max(...BUCKETS.map((bucket) => bucket.count), 1);
 const EXECUTED_COUNT = LATENCY_SAMPLES.filter((sample) => sample.outcome === "Executed").length;
+const MARGIN_GONE_COUNT = LATENCY_SAMPLES.filter((sample) => sample.outcome === "SkippedMarginGone").length;
+const OTHER_OUTCOME_COUNT = LATENCY_SAMPLES.length - EXECUTED_COUNT - MARGIN_GONE_COUNT;
 const LREACT_DIFF_PERCENT = Math.round((UNFILTERED.lreactSpent / FILTERED.lreactSpent - 1) * 100);
 
 const LATENCY_STATS = [
@@ -64,9 +70,11 @@ export default function EvidencePage() {
             <div className="label">1 · Speed</div>
             <h2 className="h2">How long from a swap to the trade that answers it?</h2>
             <p className="body-lg">
-              We ran it {CALLBACKS_REQUESTED} times. All {CALLBACKS_ARRIVED} trades arrived and {CALLBACK_TIMEOUTS}{" "}
-              went missing. {EXECUTED_COUNT} were completed, and {LATENCY_SAMPLES.length - EXECUTED_COUNT} was
-              cancelled on arrival because the prices had already moved back.
+              We ran it {CALLBACKS_REQUESTED} times. {CALLBACK_TIMEOUTS === 0 ? "All " : ""}
+              {CALLBACKS_ARRIVED} trades arrived and {CALLBACK_TIMEOUTS} went missing. {EXECUTED_COUNT} were completed,
+              and {MARGIN_GONE_COUNT} {MARGIN_GONE_COUNT === 1 ? "was" : "were"} cancelled on arrival because the
+              prices had already moved back.
+              {OTHER_OUTCOME_COUNT > 0 ? ` ${OTHER_OUTCOME_COUNT} did not trade for another reason.` : ""}
             </p>
           </div>
 
@@ -88,14 +96,16 @@ export default function EvidencePage() {
                 <span>{LATENCIES_MS.length} runs</span>
               </div>
               <div className={styles.chart} role="img" aria-label={`Number of runs per duration: ${histogramSummary}`}>
-                {BUCKETS.map((bucket) => (
+                {BUCKETS.map((bucket, index) => (
                   <div key={bucket.value} className={styles.barColumn}>
                     <span className="mono num">{bucket.count}</span>
                     <div
                       className={`${styles.bar} ${bucket.value === P50_MS ? styles.median : ""}`}
                       style={{ height: `${(bucket.count / MAX_COUNT) * 100}%` }}
                     />
-                    <span className="mono num faint">{(bucket.value / 1000).toFixed(1)}s</span>
+                    <span className={`mono num faint ${(BUCKETS.length - 1 - index) % AXIS_LABEL_STEP === 0 ? "" : styles.axisHidden}`}>
+                      {(bucket.value / 1000).toFixed(1)}s
+                    </span>
                   </div>
                 ))}
               </div>
@@ -112,8 +122,8 @@ export default function EvidencePage() {
               that.
             </Note>
             <Note title="Weak spot">
-              {LATENCIES_MS.length} runs is a small sample, so &quot;slow end&quot; is simply the slowest run. The
-              blue bar is the typical time.
+              Most runs come from one test script that opens the same price gap again and again on a quiet test
+              network, so they show one kind of workload. The blue bar is the typical time.
             </Note>
           </div>
         </div>

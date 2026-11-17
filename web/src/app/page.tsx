@@ -19,6 +19,7 @@ import styles from "./home.module.css";
 
 const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
 const P95_MS = percentile(LATENCIES_MS, 95) ?? 0;
+const WITHIN_P95_COUNT = LATENCIES_MS.filter((latency) => latency <= P95_MS).length;
 const SAMPLE = LATENCY_SAMPLES[0];
 
 interface Decision {
@@ -60,8 +61,13 @@ function formatSeconds(ms: number): string {
 export default function HomePage() {
   const metrics = [
     { label: "Typical speed", value: formatSeconds(P50_MS), unit: "seconds", note: `From a swap to the trade that answers it. Middle value of ${LATENCIES_MS.length} runs.` },
-    { label: "Slowest run", value: formatSeconds(P95_MS), unit: "seconds", note: "Even the slowest run finished in this time." },
-    { label: "Trades that never arrived", value: String(CALLBACK_TIMEOUTS), unit: `of ${CALLBACKS_REQUESTED}`, note: "Every trade the contract sent reached Base Sepolia." },
+    { label: "Slow end", value: formatSeconds(P95_MS), unit: "seconds", note: `${WITHIN_P95_COUNT} of ${LATENCIES_MS.length} runs finished within this time.` },
+    {
+      label: "Trades that never arrived",
+      value: String(CALLBACK_TIMEOUTS),
+      unit: `of ${CALLBACKS_REQUESTED}`,
+      note: CALLBACK_TIMEOUTS === 0 ? "Every trade the contract sent reached Base Sepolia." : "Trades the contract sent that never reached Base Sepolia.",
+    },
     { label: "Fees saved", value: `${ETH_SAVED_PERCENT}`, unit: "%", note: "By checking first and not sending trades that would be cancelled anyway." },
   ];
 

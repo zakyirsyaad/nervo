@@ -4,7 +4,8 @@ Recorded results behind the numbers in the main [README](../README.md). Each fil
 
 | File | Written by | What it holds |
 |---|---|---|
-| [latency-2026-11-16.json](latency-2026-11-16.json) | `tools/latency_report.py` | **The latency result.** 12 callbacks, each with the hashes and blocks of all three stages |
+| [latency-2026-11-17.json](latency-2026-11-17.json) | `tools/latency_report.py` | **The latency result.** All 73 callbacks of the main stack from 15 to 17 November, including a 50-sample benchmark run on 17 November, each with the hashes and blocks of all three stages |
+| [latency-2026-11-16.json](latency-2026-11-16.json) | `tools/latency_report.py` | Earlier result with the first 12 callbacks. Superseded by the 17 November file, which includes them |
 | [compare-run-2026-11-16.json](compare-run-2026-11-16.json) | `tools/compare_driver.py` | Run log of the filter comparison: both stacks' addresses, block range, funds before and after, and every step's transaction |
 | [compare-2026-11-16.json](compare-2026-11-16.json) | `tools/compare_report.py` | **The comparison result**, computed from the run log and chain data |
 | [order-latency-2026-11-17.json](order-latency-2026-11-17.json) | `tools/order_bench.py` | **The order latency result.** 10 stop-losses, each with the placement, mirror, price drop, trigger, fill and restore transactions, and the trigger-to-fill latency |
