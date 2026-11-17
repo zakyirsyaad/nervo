@@ -178,6 +178,14 @@ ORDER_BOOK=<address> ORDER_FAUCET=<address> TRIGGER_PRICE=3300000000 MIN_OUT=320
 forge script script/OrderScenario.s.sol --sig "drop()" --rpc-url base_sepolia --account <account> --sender <your address> --broadcast
 ```
 
+To measure latency over many orders, fund the benchmark trader from section 4 with a little Unichain Sepolia ETH (each order needs its 0.0001 ETH fee plus gas), align Pool B with Pool A (`neutralize()` in section 2) so the price moves stay below the arbitrage threshold, and run:
+
+```bash
+python3 tools/order_bench.py 10 evidence/order-latency-new.json
+```
+
+The driver claims test WETH from the Unichain faucet if needed, approves once, and stops early if the order contract on Lasna drops below 0.2 lREACT.
+
 Unichain Sepolia ETH can be bridged from Ethereum Sepolia by sending ETH to its L1StandardBridge, `0xea58fcA6849d79EAd1f26608855c2D6407d54Ce2`.
 
 ## 8. Mainnet replay

@@ -12,7 +12,7 @@ The same loop also protects positions. A user places a stop-loss, take-profit or
 |---|---|
 | Median latency, swap to callback | **1.4 s** (p95 2.0 s, 12 of 12 callbacks arrived) |
 | Destination fees saved by filtering on Lasna | **56%**, with the same 3 trades executed |
-| Protective orders | Stop-loss on Unichain filled **1.8 s** after the Base price crossed its trigger ([proof](#protective-orders)) |
+| Protective orders, trigger to fill | **1.8 s** median over 10 stop-losses (p95 2.6 s, 10 of 10 filled) on Unichain, triggered by the Base price ([details](#protective-orders)) |
 | Contracts | 4 core contracts, 3 test fixtures, 157 Foundry tests including invariants |
 | Web app | Live prices, swap, protective orders, faucets, and trackers that follow each loop across chains ([web/](web/)) |
 
@@ -124,7 +124,17 @@ sequenceDiagram
 | `OrderOutcome` (Filled, 331.47 USDC) | Unichain Sepolia | 68055270 | [`0xf077bb61…ca504a59`](https://sepolia.uniscan.xyz/tx/0xf077bb612534f249fb02affb86c00295c292adb96a7b20e42673862fca504a59) |
 | `OrderMirrored` (Closed) | Lasna | 8560334 | [`0x08b144ef…0ff18388`](https://lasna.reactscan.net/tx/0x08b144ef574ac574434e883203d20318d0cd527cffc51ba394e921c20ff18388) |
 
-From the Base block that crossed the trigger to the Unichain block that filled the order: 1.8 s. Unichain timestamps are whole seconds, so the fill happened 1.8 to 2.8 s after the trigger block. Record: [evidence/order-2026-11-17.json](evidence/order-2026-11-17.json).
+From the Base block that crossed the trigger to the Unichain block that filled the order: 1.8 s. Record: [evidence/order-2026-11-17.json](evidence/order-2026-11-17.json).
+
+**Latency over 10 orders**, measured 17 November 2026 with [tools/order_bench.py](tools/order_bench.py). Each sample places a 0.1 WETH stop-loss 0.4% below the Base Pool A price, waits until Lasna mirrors it, sells WETH on Pool A until the price is 0.6% lower, waits for the fill on Unichain, then restores the price. A 0.6% move stays below the arbitrage threshold, so the arbitrage loop does not interfere.
+
+| Orders | Filled | p50 | p95 | Min | Max |
+|---|---|---|---|---|---|
+| 10 | 10 | 1,800 ms | 2,600 ms | 1,200 ms | 2,600 ms |
+
+- Latency is the timestamp of the Unichain block that filled the order minus `blockTimestampMs` of the Base block that crossed the trigger. Unichain timestamps are whole seconds, so each value is a lower bound: the true delay is up to one second longer.
+- Each order cost about 0.07 lREACT on Lasna (the order placement, the price update and the outcome each run `react()`), plus its 0.0001 ETH fee on Unichain.
+- Per-sample transactions on all three chains: [evidence/order-latency-2026-11-17.json](evidence/order-latency-2026-11-17.json).
 
 **Built for strangers to use.** The order book is a public testnet contract, so it is hardened against griefing as well as theft:
 
