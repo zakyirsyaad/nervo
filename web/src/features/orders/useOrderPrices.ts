@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useReadContract } from "wagmi";
 import { poolAbi } from "@/config/abis";
 import { orderChain, originChain } from "@/config/chains";
@@ -39,9 +40,13 @@ export function useOrderPrices(isDeployed: boolean): OrderPrices {
     query: { refetchInterval: POLL_INTERVAL_MS, enabled: isDeployed },
   });
 
+  // wagmi keeps `data` the same object while the reserves do not change, so these hold between polls.
+  const baseReserves = useMemo(() => toReserves(base.data), [base.data]);
+  const unichainReserves = useMemo(() => toReserves(unichain.data), [unichain.data]);
+
   return {
-    base: toReserves(base.data),
-    unichain: toReserves(unichain.data),
+    base: baseReserves,
+    unichain: unichainReserves,
     isBaseError: base.isError,
     isUnichainError: unichain.isError,
   };

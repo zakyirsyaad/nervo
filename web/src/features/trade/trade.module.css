@@ -1,15 +1,32 @@
+/* The workspace first, then the full-width record under it. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  padding-top: 48px;
+}
+
+/* The form sits on the right. row-reverse keeps it first in the markup, so it comes first when the columns stack. */
 .workspace {
   display: flex;
+  flex-direction: row-reverse;
   flex-wrap: wrap;
   gap: 32px;
   align-items: flex-start;
-  padding-top: 48px;
 }
 
 .left {
   flex: 1 1 360px;
   min-width: 0;
   max-width: 480px;
+}
+
+/* Side by side, the form stays in reach while the loop plays out next to it. Stacked, it scrolls normally. */
+@media (min-width: 960px) {
+  .left {
+    position: sticky;
+    top: 24px;
+  }
 }
 
 .right {

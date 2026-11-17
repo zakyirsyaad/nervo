@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS, USDC_DECIMALS, WETH_DECIMALS } from "@/config/contracts";
 import { bestRoute, gapBps, spotPriceUsdc, type Reserves } from "@/lib/amm";
 import { formatAmount, formatCompact, formatPercent, PENDING_TEXT } from "@/lib/format";
@@ -13,9 +14,11 @@ function holdingsText(reserves: Reserves | undefined): string | undefined {
 interface MarketPanelProps {
   pools: PoolPair | undefined;
   isError: boolean;
+  /** Drawn under the price cells, inside the same panel: the gap chart. */
+  children?: ReactNode;
 }
 
-export function MarketPanel({ pools, isError }: MarketPanelProps) {
+export function MarketPanel({ pools, isError, children }: MarketPanelProps) {
   const priceA = pools ? spotPriceUsdc(pools.A) : undefined;
   const priceB = pools ? spotPriceUsdc(pools.B) : undefined;
   const gap = priceA !== undefined && priceB !== undefined ? gapBps(priceB, priceA) : undefined;
@@ -57,6 +60,7 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
           unit="USDC profit"
         />
       </div>
+      {children}
     </div>
   );
 }

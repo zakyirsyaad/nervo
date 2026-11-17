@@ -1,15 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Address, Hex } from "viem";
-import {
-  buildActivity,
-  buildPriceSteps,
-  groupByTransaction,
-  mergeLogs,
-  priceScale,
-  toPoolLog,
-  type PoolLog,
-  type PoolTx,
-} from "./history";
+import { buildLoops, buildPriceSteps, groupByTransaction, mergeLogs, summarizeLoops, toPoolLog, type PoolLog } from "./history";
 
 const POOL_A = "0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F" as Address;
 const POOL_B = "0xf68dE754214b013c206AFD5753b9f26428C29228" as Address;
@@ -104,59 +95,78 @@ describe("groupByTransaction", () => {
   });
 });
 
-describe("buildActivity", () => {
-  const txs = groupByTransaction([...userSwapLogs, ...arbitrageLogs]);
+describe("buildLoops", () => {
+  const NOW = 59_977_000;
 
-  it("shows the contract's two swaps as one trade with its profit and how soon it followed the swap before it", () => {
-    const [latest] = buildActivity(txs, EXECUTOR, 10);
-    expect(latest).toMatchObject({
-      kind: "arbitrage",
-      buyPool: "A",
-      sellPool: "B",
-      usdcIn: 1_000n * USDC_UNIT,
-      usdcOut: 1_006_636_917n,
-      profit: 6_636_917n,
-      sincePreviousMs: 1_600,
-    });
+  it("pairs a swap with the contract's trade that answered it, with the time between them", () => {
+    const [row] = buildLoops(groupByTransaction([...userSwapLogs, ...arbitrageLogs]), undefined, EXECUTOR, NOW);
+    expect(row.verdict).toBe("answered");
+    expect(row.change).toMatchObject({ kind: "swap", actor: TRADER, txHash: tx(1) });
+    expect(row.answer).toMatchObject({ buyPool: "A", sellPool: "B", usdcIn: 1_000n * USDC_UNIT, profit: 6_636_917n, afterMs: 1_600 });
+    // The swap opened a gap of about 2%; the fixed 1,000 USDC trade narrowed it without closing it fully.
+    expect(row.gapAfterChange).toBeGreaterThan(190);
+    expect(row.gapAfterAnswer).toBeGreaterThan(0);
+    expect(row.gapAfterAnswer).toBeLessThan(row.gapAfterChange ?? 0);
   });
 
-  it("shows anyone else's swap with what they paid and what they got, newest first", () => {
-    const entries = buildActivity(txs, EXECUTOR, 10);
-    expect(entries[1]).toMatchObject({
-      kind: "swap",
-      actor: TRADER,
-      pool: "B",
-      paid: { token: "usdc", amount: 3_000n * USDC_UNIT },
-      received: { token: "weth", amount: 899_563_854_437_029_100n },
-    });
+  it("says no trade was due when the gap could not pay the fees", () => {
+    const small: PoolLog[] = [
+      reserves("B", tx(5), 300n, 0, 100n * WETH_UNIT - 3_323_000_000_000_000n, 300_010n * USDC_UNIT, TRADER),
+      swap("B", tx(5), 300n, 1, TRADER, false, 10n * USDC_UNIT, 3_323_000_000_000_000n),
+    ];
+    const live = { A: { weth: 100n * WETH_UNIT, usdc: 300_000n * USDC_UNIT } };
+    expect(buildLoops(groupByTransaction(small), live, EXECUTOR, 1_000)[0].verdict).toBe("too-small");
   });
 
-  it("leaves the follow-up time out when no other transaction came shortly before the trade", () => {
-    const [only] = buildActivity(groupByTransaction(arbitrageLogs), EXECUTOR, 10);
-    expect(only).toMatchObject({ kind: "arbitrage", sincePreviousMs: undefined });
+  it("waits for a trade for a minute, then says none came", () => {
+    const txs = groupByTransaction(userSwapLogs);
+    const swapTime = 59_976_868;
+    expect(buildLoops(txs, undefined, EXECUTOR, swapTime + 30)[0].verdict).toBe("waiting");
+    expect(buildLoops(txs, undefined, EXECUTOR, swapTime + 120)[0].verdict).toBe("no-trade");
   });
 
-  it("shows a reserve change without a swap as a reset by the pool owner", () => {
+  it("keeps a trade with no change before it in the window as its own row", () => {
+    const [row] = buildLoops(groupByTransaction(arbitrageLogs), undefined, EXECUTOR, NOW);
+    expect(row).toMatchObject({ change: null, verdict: "unprompted" });
+    expect(row.answer?.afterMs).toBeUndefined();
+  });
+
+  it("describes a reserve change without a swap as a reset, with the price it set", () => {
     const reset = groupByTransaction([reserves("A", tx(7), 200n, 0, 100n * WETH_UNIT, 300_000n * USDC_UNIT, OWNER)]);
-    expect(buildActivity(reset, EXECUTOR, 10)).toEqual([
-      expect.objectContaining({ kind: "reset", actor: OWNER, pools: ["A"], prices: { A: 3_000n * USDC_UNIT } }),
-    ]);
+    const [row] = buildLoops(reset, undefined, EXECUTOR, NOW);
+    expect(row.change).toMatchObject({ kind: "reset", actor: OWNER, resetPrices: { A: 3_000n * USDC_UNIT } });
   });
 
-  it("returns at most `limit` entries", () => {
-    expect(buildActivity(txs, EXECUTOR, 1)).toHaveLength(1);
+  it("lists the newest change first", () => {
+    const later = [reserves("A", tx(8), 59_990_000n, 0, 100n * WETH_UNIT, 300_000n * USDC_UNIT, OWNER)];
+    const rows = buildLoops(groupByTransaction([...userSwapLogs, ...arbitrageLogs, ...later]), undefined, EXECUTOR, NOW);
+    expect(rows.map((row) => row.key)).toEqual([tx(8), tx(1)]);
+  });
+});
+
+describe("summarizeLoops", () => {
+  it("counts answered changes and reports the middle and fastest answer times", () => {
+    const answered = (afterMs: number) => ({
+      key: String(afterMs),
+      change: null,
+      answer: { afterMs } as never,
+      gapAfterChange: null,
+      gapAfterAnswer: null,
+      verdict: "answered" as const,
+    });
+    expect(summarizeLoops([answered(1_800), answered(1_600), answered(3_600)])).toEqual({ answered: 3, typicalMs: 1_800, fastestMs: 1_600 });
+    expect(summarizeLoops([])).toEqual({ answered: 0, typicalMs: undefined, fastestMs: undefined });
   });
 });
 
 describe("buildPriceSteps", () => {
-  it("starts each pool from the reserves before its first swap and carries the other pool forward", () => {
+  it("gives both prices after each transaction, carrying the untouched pool forward", () => {
     const steps = buildPriceSteps(groupByTransaction([...userSwapLogs, ...arbitrageLogs]), undefined, 10, EXECUTOR);
-    expect(steps).toHaveLength(3);
-    // Before anything happened, both pools were at 100 WETH / 300,000 USDC.
-    expect(steps[0]).toMatchObject({ txHash: null, priceA: 3_000n * USDC_UNIT, priceB: 3_000n * USDC_UNIT });
-    expect(steps[1]).toMatchObject({ txHash: tx(1), byContract: false, priceA: 3_000n * USDC_UNIT });
-    expect(steps[1].priceB).toBeGreaterThan(3_000n * USDC_UNIT);
-    expect(steps[2]).toMatchObject({ txHash: tx(2), byContract: true });
+    expect(steps.map((step) => step.txHash)).toEqual([tx(1), tx(2)]);
+    expect(steps[0]).toMatchObject({ byContract: false, hasSwap: true, priceA: 3_000n * USDC_UNIT });
+    expect(steps[0].priceB).toBeGreaterThan(3_000n * USDC_UNIT);
+    expect(steps[1]).toMatchObject({ byContract: true });
+    expect(steps.map((step) => step.touches)).toEqual([["B"], ["A", "B"]]);
   });
 
   it("uses the live reserves for a pool that did not change in the window", () => {
@@ -166,42 +176,11 @@ describe("buildPriceSteps", () => {
       10,
       EXECUTOR,
     );
-    expect(steps.every((step) => step.priceA === 2_000n * USDC_UNIT)).toBe(true);
+    expect(steps[0].priceA).toBe(2_000n * USDC_UNIT);
   });
 
   it("keeps only the newest steps", () => {
-    const steps = buildPriceSteps(groupByTransaction([...userSwapLogs, ...arbitrageLogs]), undefined, 2, EXECUTOR);
-    expect(steps.map((step) => step.txHash)).toEqual([tx(1), tx(2)]);
-  });
-
-  it("returns no steps when nothing happened", () => {
-    const empty: PoolTx[] = [];
-    expect(buildPriceSteps(empty, undefined, 10, EXECUTOR)).toEqual([]);
-  });
-});
-
-describe("priceScale", () => {
-  it("puts the highest price at the top and the lowest at the bottom", () => {
-    const scale = priceScale([3_000n * USDC_UNIT, 3_060n * USDC_UNIT]);
-    expect(scale.y(3_060n * USDC_UNIT)).toBeLessThan(scale.y(3_000n * USDC_UNIT));
-    expect(scale.y(3_000n * USDC_UNIT)).toBeLessThanOrEqual(1);
-    expect(scale.y(3_060n * USDC_UNIT)).toBeGreaterThanOrEqual(0);
-  });
-
-  it("gives flat prices some room instead of dividing by zero", () => {
-    const scale = priceScale([3_000n * USDC_UNIT]);
-    expect(scale.y(3_000n * USDC_UNIT)).toBeCloseTo(0.5);
-    expect(scale.max).toBeGreaterThan(scale.min);
-  });
-
-  it("stays usable when no price is known", () => {
-    const scale = priceScale([0n]);
-    expect(scale.y(3_000n * USDC_UNIT)).toBe(0.5);
-    expect(Number.isFinite(scale.max)).toBe(true);
-  });
-
-  it("keeps wild swings readable on a log scale", () => {
-    const scale = priceScale([30n * USDC_UNIT, 3_000n * USDC_UNIT, 300_000n * USDC_UNIT]);
-    expect(scale.y(3_000n * USDC_UNIT)).toBeCloseTo(0.5, 1);
+    const steps = buildPriceSteps(groupByTransaction([...userSwapLogs, ...arbitrageLogs]), undefined, 1, EXECUTOR);
+    expect(steps.map((step) => step.txHash)).toEqual([tx(2)]);
   });
 });

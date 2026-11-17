@@ -3,14 +3,16 @@
 
 import type { Address, Hex } from "viem";
 import { BASE_SEPOLIA_BLOCK_TIME_MS } from "@/config/chains";
-import { spotPriceUsdc, type Reserves, type TokenSymbol } from "@/lib/amm";
+import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS } from "@/config/contracts";
+import { bestRoute, gapBps, spotPriceUsdc, type Reserves } from "@/lib/amm";
 
 export type PoolKey = "A" | "B";
 
 export const POOL_KEYS: readonly PoolKey[] = ["A", "B"];
 
 // The executor drops a callback older than 60 seconds, so a trade never answers a change older than that.
-const FOLLOW_UP_WINDOW_BLOCKS = 300n;
+const FOLLOW_UP_WINDOW_SECONDS = 60;
+const FOLLOW_UP_WINDOW_BLOCKS = BigInt((FOLLOW_UP_WINDOW_SECONDS * 1000) / BASE_SEPOLIA_BLOCK_TIME_MS);
 
 interface LogPosition {
   readonly pool: PoolKey;
@@ -160,195 +162,212 @@ export function groupByTransaction(logs: readonly PoolLog[]): PoolTx[] {
   return [...byTx.values()].map(toPoolTx);
 }
 
-interface EntryBase {
-  readonly key: string;
+/** A transaction that changed the pools, other than the contract's own trade. */
+export interface Change {
   readonly txHash: Hex;
   readonly blockNumber: bigint;
   readonly timestamp: number | undefined;
+  readonly actor: Address;
+  readonly kind: "swap" | "reset";
+  readonly swaps: readonly SwapLeg[];
+  /** Pools a reset set, with the price each was set to. */
+  readonly resetPrices: Partial<Record<PoolKey, bigint>>;
 }
 
-export interface ArbitrageEntry extends EntryBase {
-  readonly kind: "arbitrage";
+/** The contract's round trip: buy WETH on one pool, sell it on the other, in one transaction. */
+export interface Answer {
+  readonly txHash: Hex;
+  readonly blockNumber: bigint;
   readonly buyPool: PoolKey;
   readonly sellPool: PoolKey;
   readonly weth: bigint;
   readonly usdcIn: bigint;
   readonly usdcOut: bigint;
   readonly profit: bigint;
-  /** Time since the last change by anyone else, when that change came within the callback deadline. */
-  readonly sincePreviousMs: number | undefined;
+  /** Time from the change it answered, from block numbers; undefined when it answered nothing we saw. */
+  readonly afterMs: number | undefined;
 }
 
-export interface TokenAmount {
-  readonly token: TokenSymbol;
-  readonly amount: bigint;
+/**
+ * answered: the contract traded after the change. too-small: the gap could not pay the fees plus the 2 USDC floor,
+ * so no trade was due. waiting: a trade may still come. no-trade: none came within the callback deadline.
+ * unprompted: a trade with no change before it in the window.
+ */
+export type Verdict = "answered" | "too-small" | "waiting" | "no-trade" | "unprompted";
+
+export interface LoopRow {
+  readonly key: string;
+  readonly change: Change | null;
+  readonly answer: Answer | null;
+  /** Pool B against Pool A in basis points, right after the change and right after the answer. */
+  readonly gapAfterChange: number | null;
+  readonly gapAfterAnswer: number | null;
+  readonly verdict: Verdict;
 }
 
-export interface SwapEntry extends EntryBase {
-  readonly kind: "swap";
-  readonly actor: Address;
-  readonly pool: PoolKey;
-  readonly paid: TokenAmount;
-  readonly received: TokenAmount;
+type PoolState = Partial<Record<PoolKey, Reserves>>;
+
+function startingReserves(txs: readonly PoolTx[], pool: PoolKey, live: PoolState | undefined): Reserves | undefined {
+  const first = txs.find((tx) => tx.after[pool] !== undefined);
+  return first ? first.before[pool] : live?.[pool];
 }
 
-export interface ResetEntry extends EntryBase {
-  readonly kind: "reset";
-  readonly actor: Address;
-  readonly pools: readonly PoolKey[];
-  readonly prices: Partial<Record<PoolKey, bigint>>;
-}
-
-export type ActivityEntry = ArbitrageEntry | SwapEntry | ResetEntry;
-
-function followUpMs(txs: readonly PoolTx[], index: number, executor: Address): number | undefined {
-  const trade = txs[index];
-  for (let earlier = index - 1; earlier >= 0; earlier -= 1) {
-    const candidate = txs[earlier];
-    if (trade.blockNumber - candidate.blockNumber > FOLLOW_UP_WINDOW_BLOCKS) return undefined;
-    if (!sameAddress(candidate.actor, executor)) return Number(trade.blockNumber - candidate.blockNumber) * BASE_SEPOLIA_BLOCK_TIME_MS;
+/** Reserves of both pools before the first transaction and after each one. */
+function replay(txs: readonly PoolTx[], live: PoolState | undefined): { start: PoolState; after: PoolState[] } {
+  const start: PoolState = { A: startingReserves(txs, "A", live), B: startingReserves(txs, "B", live) };
+  const after: PoolState[] = [];
+  let state = start;
+  for (const tx of txs) {
+    state = { ...state, ...tx.after };
+    after.push(state);
   }
-  return undefined;
+  return { start, after };
 }
 
-function entriesFor(txs: readonly PoolTx[], index: number, executor: Address): ActivityEntry[] {
-  const tx = txs[index];
-  const base = { txHash: tx.txHash, blockNumber: tx.blockNumber, timestamp: tx.timestamp };
+function gapOf(state: PoolState): number | null {
+  if (!state.A || !state.B) return null;
+  return gapBps(spotPriceUsdc(state.B), spotPriceUsdc(state.A));
+}
+
+/** The contract's own rule: a 1,000 USDC round trip must come back with at least 2 USDC more. */
+function isTradable(state: PoolState): boolean | null {
+  if (!state.A || !state.B) return null;
+  return bestRoute(ARB_INPUT_USDC, state.A, state.B, POOL_FEE_BPS).usdcOut >= ARB_INPUT_USDC + MIN_SURPLUS_USDC;
+}
+
+function toAnswer(tx: PoolTx, changeBlock: bigint | undefined): Answer {
   const [buy, sell] = tx.swaps;
-  const isRoundTrip = tx.swaps.length === 2 && !buy.wethIn && sell.wethIn;
-
-  if (sameAddress(tx.actor, executor) && isRoundTrip) {
-    return [
-      {
-        ...base,
-        key: tx.txHash,
-        kind: "arbitrage",
-        buyPool: buy.pool,
-        sellPool: sell.pool,
-        weth: buy.amountOut,
-        usdcIn: buy.amountIn,
-        usdcOut: sell.amountOut,
-        profit: sell.amountOut - buy.amountIn,
-        sincePreviousMs: followUpMs(txs, index, executor),
-      },
-    ];
-  }
-
-  if (tx.swaps.length > 0) {
-    return tx.swaps
-      .map((leg, legIndex): SwapEntry => ({
-        ...base,
-        key: `${tx.txHash}:${legIndex}`,
-        kind: "swap",
-        actor: leg.sender,
-        pool: leg.pool,
-        paid: { token: leg.wethIn ? "weth" : "usdc", amount: leg.amountIn },
-        received: { token: leg.wethIn ? "usdc" : "weth", amount: leg.amountOut },
-      }))
-      .reverse();
-  }
-
-  const pools = POOL_KEYS.filter((pool) => tx.after[pool] !== undefined);
-  const prices = Object.fromEntries(pools.map((pool) => [pool, spotPriceUsdc(tx.after[pool] as Reserves)]));
-  return [{ ...base, key: tx.txHash, kind: "reset", actor: tx.actor, pools, prices }];
+  return {
+    txHash: tx.txHash,
+    blockNumber: tx.blockNumber,
+    buyPool: buy.pool,
+    sellPool: sell.pool,
+    weth: buy.amountOut,
+    usdcIn: buy.amountIn,
+    usdcOut: sell.amountOut,
+    profit: sell.amountOut - buy.amountIn,
+    afterMs: changeBlock === undefined ? undefined : Number(tx.blockNumber - changeBlock) * BASE_SEPOLIA_BLOCK_TIME_MS,
+  };
 }
 
-/** Newest-first activity: the contract's round trips as one trade each, other swaps, and owner resets. */
-export function buildActivity(txs: readonly PoolTx[], executor: Address, limit: number): ActivityEntry[] {
-  const entries: ActivityEntry[] = [];
-  for (let index = txs.length - 1; index >= 0 && entries.length < limit; index -= 1) {
-    entries.push(...entriesFor(txs, index, executor));
-  }
-  return entries.slice(0, limit);
+function toChange(tx: PoolTx): Change {
+  const isReset = tx.swaps.length === 0;
+  const resetPrices = isReset
+    ? Object.fromEntries(POOL_KEYS.filter((pool) => tx.after[pool]).map((pool) => [pool, spotPriceUsdc(tx.after[pool] as Reserves)]))
+    : {};
+  return {
+    txHash: tx.txHash,
+    blockNumber: tx.blockNumber,
+    timestamp: tx.timestamp,
+    actor: tx.actor,
+    kind: isReset ? "reset" : "swap",
+    swaps: tx.swaps,
+    resetPrices,
+  };
+}
+
+function isRoundTrip(tx: PoolTx, executor: Address): boolean {
+  const [buy, sell] = tx.swaps;
+  return sameAddress(tx.actor, executor) && tx.swaps.length === 2 && !buy.wethIn && sell.wethIn;
+}
+
+interface OpenRow {
+  readonly change: Change | null;
+  readonly answer: Answer | null;
+  readonly gapAfterChange: number | null;
+  readonly gapAfterAnswer: number | null;
+  readonly tradable: boolean | null;
+}
+
+function verdictOf(row: OpenRow, nowSeconds: number): Verdict {
+  if (row.answer) return row.change ? "answered" : "unprompted";
+  if (row.tradable === false) return "too-small";
+  const age = row.change?.timestamp === undefined ? Infinity : nowSeconds - row.change.timestamp;
+  return age <= FOLLOW_UP_WINDOW_SECONDS ? "waiting" : "no-trade";
+}
+
+/**
+ * Pairs every change with the contract's trade that followed it, newest first. The contract answers the latest
+ * state, so a trade belongs to the change right before it, if that change came within the callback deadline.
+ */
+export function buildLoops(txs: readonly PoolTx[], live: PoolState | undefined, executor: Address, nowSeconds: number): LoopRow[] {
+  const { after } = replay(txs, live);
+  const rows: OpenRow[] = [];
+
+  txs.forEach((tx, index) => {
+    if (!isRoundTrip(tx, executor)) {
+      rows.push({ change: toChange(tx), answer: null, gapAfterChange: gapOf(after[index]), gapAfterAnswer: null, tradable: isTradable(after[index]) });
+      return;
+    }
+    const last = rows.at(-1);
+    const canAnswer = last?.change && !last.answer && tx.blockNumber - last.change.blockNumber <= FOLLOW_UP_WINDOW_BLOCKS;
+    if (last && canAnswer) {
+      rows[rows.length - 1] = { ...last, answer: toAnswer(tx, last.change?.blockNumber), gapAfterAnswer: gapOf(after[index]) };
+      return;
+    }
+    rows.push({ change: null, answer: toAnswer(tx, undefined), gapAfterChange: null, gapAfterAnswer: gapOf(after[index]), tradable: null });
+  });
+
+  return rows
+    .map((row) => ({
+      key: row.change?.txHash ?? row.answer?.txHash ?? "",
+      change: row.change,
+      answer: row.answer,
+      gapAfterChange: row.gapAfterChange,
+      gapAfterAnswer: row.gapAfterAnswer,
+      verdict: verdictOf(row, nowSeconds),
+    }))
+    .reverse();
+}
+
+export interface LoopSummary {
+  readonly answered: number;
+  readonly typicalMs: number | undefined;
+  readonly fastestMs: number | undefined;
+}
+
+/** How many changes the contract answered and how fast, over every row given. */
+export function summarizeLoops(rows: readonly LoopRow[]): LoopSummary {
+  const times = rows.flatMap((row) => (row.verdict === "answered" && row.answer?.afterMs !== undefined ? [row.answer.afterMs] : []));
+  const sorted = [...times].sort((left, right) => left - right);
+  return {
+    answered: times.length,
+    typicalMs: sorted.length > 0 ? sorted[Math.floor((sorted.length - 1) / 2)] : undefined,
+    fastestMs: sorted[0],
+  };
 }
 
 export interface PriceStep {
   readonly key: string;
-  /** Null for the starting point, before the first transaction shown. */
-  readonly txHash: Hex | null;
+  readonly txHash: Hex;
   readonly timestamp: number | undefined;
-  /** Who made the change; null for the starting point. */
-  readonly actor: Address | null;
+  readonly actor: Address;
   readonly hasSwap: boolean;
   readonly byContract: boolean;
+  /** Pools whose reserves this transaction changed. */
+  readonly touches: readonly PoolKey[];
   readonly priceA: bigint | null;
   readonly priceB: bigint | null;
-}
-
-function startingReserves(txs: readonly PoolTx[], pool: PoolKey, live: Partial<Record<PoolKey, Reserves>> | undefined): Reserves | undefined {
-  const first = txs.find((tx) => tx.after[pool] !== undefined);
-  return first ? first.before[pool] : live?.[pool];
 }
 
 function priceOf(reserves: Reserves | undefined): bigint | null {
   return reserves ? spotPriceUsdc(reserves) : null;
 }
 
-/**
- * Both pool prices after each transaction, oldest first, ending with the newest `maxSteps`. The first step is the
- * state before the window when it can be worked out. A pool that did not change uses its live reserves throughout.
- */
-export function buildPriceSteps(
-  txs: readonly PoolTx[],
-  live: Partial<Record<PoolKey, Reserves>> | undefined,
-  maxSteps: number,
-  executor: Address,
-): PriceStep[] {
-  if (txs.length === 0) return [];
-  let state: Partial<Record<PoolKey, Reserves>> = { A: startingReserves(txs, "A", live), B: startingReserves(txs, "B", live) };
-  const steps: PriceStep[] = [
-    {
-      key: "start",
-      txHash: null,
-      timestamp: undefined,
-      actor: null,
-      hasSwap: false,
-      byContract: false,
-      priceA: priceOf(state.A),
-      priceB: priceOf(state.B),
-    },
-  ];
-  for (const tx of txs) {
-    state = { ...state, ...tx.after };
-    steps.push({
+/** Both pool prices after each transaction, oldest first, ending with the newest `maxSteps`. */
+export function buildPriceSteps(txs: readonly PoolTx[], live: PoolState | undefined, maxSteps: number, executor: Address): PriceStep[] {
+  const { after } = replay(txs, live);
+  return txs
+    .map((tx, index) => ({
       key: tx.txHash,
       txHash: tx.txHash,
       timestamp: tx.timestamp,
       actor: tx.actor,
       hasSwap: tx.swaps.length > 0,
       byContract: sameAddress(tx.actor, executor),
-      priceA: priceOf(state.A),
-      priceB: priceOf(state.B),
-    });
-  }
-  return steps.slice(-maxSteps);
-}
-
-export interface PriceScale {
-  readonly min: number;
-  readonly max: number;
-  /** Vertical position from 0 (top) to 1 (bottom). */
-  readonly y: (price: bigint) => number;
-}
-
-// Room above and below the lines, as a share of the plotted range.
-const SCALE_PADDING = 0.08;
-// Half-height of the range when every price is the same, as a ratio (1%).
-const FLAT_HALF_RANGE = Math.log(1.01);
-
-/** Log scale over the given prices, so a 1% gap and a 100x swing both stay readable. */
-export function priceScale(prices: readonly bigint[]): PriceScale {
-  const logs = prices.filter((price) => price > 0n).map((price) => Math.log(Number(price)));
-  if (logs.length === 0) return { min: 0, max: 0, y: () => 0.5 };
-  const low = Math.min(...logs);
-  const high = Math.max(...logs);
-  const span = high - low;
-  const pad = span > 0 ? span * SCALE_PADDING : FLAT_HALF_RANGE;
-  const bottom = low - pad;
-  const top = high + pad;
-  return {
-    min: Math.exp(bottom),
-    max: Math.exp(top),
-    y: (price) => (price > 0n ? (top - Math.log(Number(price))) / (top - bottom) : 1),
-  };
+      touches: POOL_KEYS.filter((pool) => tx.after[pool] !== undefined),
+      priceA: priceOf(after[index].A),
+      priceB: priceOf(after[index].B),
+    }))
+    .slice(-maxSteps);
 }
