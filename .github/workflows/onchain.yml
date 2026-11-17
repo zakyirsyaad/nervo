@@ -1,0 +1,71 @@
+name: On-chain check
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "foundry.toml"
+      - "tools/verify_deployed.py"
+      - "web/src/config/**"
+      - "web/src/features/**"
+      - ".github/workflows/onchain.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  bytecode:
+    name: Deployed bytecode matches the repo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: v1.7.1
+      - run: forge build
+      - name: Compare every deployed address with out/
+        # Public testnet RPCs drop requests now and then, so allow three attempts.
+        run: |
+          for attempt in 1 2 3; do
+            python3 tools/verify_deployed.py && exit 0
+            echo "::warning::verify_deployed.py attempt $attempt of 3 failed"
+            sleep 20
+          done
+          exit 1
+
+  trackers:
+    name: Web trackers against live testnets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Replay the published benchmark samples through the trackers
+        run: pnpm test live --retry 2
+        env:
+          LIVE: "1"

@@ -1,0 +1,7 @@
+# The tools and replay scripts import their siblings by bare name, so both folders are first-party roots.
+src = ["tools", "replay"]
+target-version = "py39"
+line-length = 140
+
+[lint]
+select = ["E", "W", "F", "B", "I"]

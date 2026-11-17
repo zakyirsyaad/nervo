@@ -1,0 +1,24 @@
+version: 2
+
+# lib/ submodules are left out on purpose: bumping them changes the compiled bytecode,
+# which would then no longer match the deployed contracts checked by tools/verify_deployed.py.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      web-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore
