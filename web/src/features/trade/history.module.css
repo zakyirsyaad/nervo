@@ -1,0 +1,293 @@
+/* Below the swap form and the live panels: the chart takes the wider share, the activity list the rest. */
+.history {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.chartPanel {
+  flex: 3 1 480px;
+  min-width: 0;
+}
+
+.activityPanel {
+  flex: 2 1 320px;
+  min-width: 0;
+}
+
+.panelBody {
+  padding: 24px;
+}
+
+/* Same height as the chart and its readout, so the page does not jump when the history arrives. */
+.placeholder {
+  margin: 0;
+  padding: 24px;
+}
+
+.panelBody > .placeholder {
+  min-height: 236px;
+  padding: 0;
+}
+
+.loadError {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+  font-weight: 400;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A short stroke in the series colour: the line key for legend, end labels and readout. */
+.key {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 0;
+  border-top: 2px solid;
+}
+
+.keyA {
+  border-color: var(--series-a);
+}
+
+/* Dashed like its line, so the two pools differ by more than colour. */
+.keyB {
+  border-top-style: dashed;
+  border-color: var(--series-b);
+}
+
+.keyMark {
+  display: inline-block;
+  width: 0;
+  height: 12px;
+  border-left: 1px dashed var(--ink-faint);
+}
+
+/* Chart */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chartFrame {
+  display: flex;
+  gap: 12px;
+}
+
+.plot {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 160px;
+  border-bottom: 1px solid var(--line-200);
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.plot:focus-visible {
+  outline-offset: 4px;
+}
+
+.plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.lineA,
+.lineB {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.lineA {
+  stroke: var(--series-a);
+}
+
+/* Drawn on top and dashed: when both pools agree, Pool A shows through the gaps. */
+.lineB {
+  stroke: var(--series-b);
+  stroke-dasharray: 6 4;
+}
+
+.contractMark {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.crosshair {
+  stroke: var(--ink-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.axisLabel {
+  position: absolute;
+  left: 0;
+  padding: 0 4px;
+  background: var(--bg-100);
+  pointer-events: none;
+}
+
+.axisTop {
+  top: 0;
+}
+
+.axisBottom {
+  bottom: 4px;
+}
+
+/* Latest prices at the right end of the lines. */
+.ends {
+  position: relative;
+  flex: 0 0 92px;
+  height: 160px;
+}
+
+.endLabel {
+  position: absolute;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.axisFoot {
+  display: flex;
+  justify-content: space-between;
+  margin-right: 104px;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  min-height: 48px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-100);
+}
+
+.readoutWho {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.readoutValues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+
+.readoutValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.tableDetails {
+  border-top: 1px solid var(--line-100);
+}
+
+.tableDetails summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.tableDetails summary:hover {
+  color: var(--ink);
+}
+
+/* Activity */
+.activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activityRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.activityRow:last-child {
+  border-bottom: 0;
+}
+
+/* The contract's trades are what the page is about, so they sit on the accent tint. */
+.activityTrade {
+  background: var(--accent-dim);
+}
+
+/* ink-faint is 4.4:1 on the tint; ink-muted keeps small text above 4.5:1. */
+.activityTrade :global(.faint) {
+  color: var(--ink-muted);
+}
+
+.activityText {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activityTitle {
+  font-weight: 500;
+}
+
+/* Time and link side by side; on a narrow panel they wrap under the text as one line. */
+.activityAside {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .ends {
+    flex-basis: 76px;
+  }
+
+  .axisFoot {
+    margin-right: 88px;
+  }
+}

@@ -73,3 +73,15 @@ export function formatWholeSeconds(seconds: number): string {
   if (seconds === 1) return "1 second";
   return `${groupThousands(String(Math.round(seconds)))} seconds`;
 }
+
+// Below this, a gap reads as "just now": block times and the page clock never agree to the second.
+const JUST_NOW_SECONDS = 5;
+
+/** Time between two moments in seconds, as "12 s ago", "5 min ago" or "2 h ago". */
+export function formatAgo(thenSeconds: number, nowSeconds: number): string {
+  const elapsed = nowSeconds - thenSeconds;
+  if (elapsed < JUST_NOW_SECONDS) return "just now";
+  if (elapsed < 60) return `${Math.floor(elapsed)} s ago`;
+  if (elapsed < 3_600) return `${Math.floor(elapsed / 60)} min ago`;
+  return `${Math.floor(elapsed / 3_600)} h ago`;
+}

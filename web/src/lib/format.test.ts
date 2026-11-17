@@ -1,6 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import {
   balanceText,
+  formatAgo,
   formatAmount,
   formatCompact,
   formatMs,
@@ -107,5 +108,18 @@ describe("balanceText", () => {
 
   test("formats the balance after the prefix", () => {
     expect(balanceText({ ...usdc, balance: 1_234_567_890n, isConnected: true })).toBe("Balance 1,234.56");
+  });
+});
+
+describe("formatAgo", () => {
+  it("says how long ago, in the largest whole unit", () => {
+    expect(formatAgo(1_000, 1_000)).toBe("just now");
+    expect(formatAgo(1_000, 1_012)).toBe("12 s ago");
+    expect(formatAgo(1_000, 1_000 + 5 * 60 + 30)).toBe("5 min ago");
+    expect(formatAgo(1_000, 1_000 + 2 * 3_600 + 59 * 60)).toBe("2 h ago");
+  });
+
+  it("treats a time slightly ahead of the clock as just now", () => {
+    expect(formatAgo(1_003, 1_000)).toBe("just now");
   });
 });

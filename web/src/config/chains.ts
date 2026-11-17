@@ -15,6 +15,11 @@ export const lasna = defineChain({
 });
 
 export const BASE_SEPOLIA_RPC_URL = "https://sepolia.base.org";
+// For reading past pool events only. sepolia.base.org caps eth_getLogs at 200 blocks (40 seconds); this one
+// allows 50,000 blocks per request and answers browsers.
+export const BASE_SEPOLIA_HISTORY_RPC_URL = "https://base-sepolia-rpc.publicnode.com";
+/** Base Sepolia makes a block every 200 ms (its blocks carry timestampMs 200 apart). */
+export const BASE_SEPOLIA_BLOCK_TIME_MS = 200;
 export const BASE_SEPOLIA_FAUCET_URL = "https://docs.base.org/base-chain/tools/network-faucets";
 export const UNICHAIN_SEPOLIA_RPC_URL = "https://sepolia.unichain.org";
 // The Unichain docs page that lists the Unichain Sepolia ETH faucets.

@@ -4,6 +4,7 @@ export const poolAbi = parseAbi([
   "function getReserves() view returns (uint256 reserveWeth, uint256 reserveUsdc)",
   "function swap(address tokenIn, uint256 amountIn, uint256 minAmountOut, address recipient) returns (uint256 amountOut)",
   "event ReserveUpdate(address indexed initiator, uint256 reserveWeth, uint256 reserveUsdc, uint256 sequence, uint256 timestamp)",
+  "event Swap(address indexed sender, address indexed tokenIn, address indexed recipient, uint256 amountIn, uint256 amountOut)",
   "error UnsupportedToken(address token)",
   "error ZeroAmount()",
   "error InsufficientOutput(uint256 amountOut, uint256 minAmountOut)",
