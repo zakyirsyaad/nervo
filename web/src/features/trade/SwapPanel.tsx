@@ -5,7 +5,7 @@ import { WalletButton } from "@/components/WalletButton";
 import { originChain } from "@/config/chains";
 import { ADDRESSES, POOL_FEE_BPS, USDC_DECIMALS, WETH_DECIMALS } from "@/config/contracts";
 import type { TokenSymbol } from "@/lib/amm";
-import { formatAmount, formatPercent, parseAmount } from "@/lib/format";
+import { balanceText, formatAmount, formatPercent, parseAmount } from "@/lib/format";
 import { FaucetRow } from "./FaucetRow";
 import { applySlippage, otherPool, previewSwap, type PoolKey, type PoolPair } from "./quote";
 import type { TrackedSwap } from "./useLoop";
@@ -229,11 +229,9 @@ interface BalanceNoteProps {
   isConnected: boolean;
 }
 
-/** Wallet balance beside a field. Says nothing until a wallet is connected, since there is no balance to show. */
 function BalanceNote({ balance, token, isConnected }: BalanceNoteProps) {
-  if (!isConnected) return null;
-  if (balance === undefined) return <span>Reading balance…</span>;
-  return <span className="num">Balance {formatAmount(balance, token.decimals, token.display)}</span>;
+  const text = balanceText({ balance, decimals: token.decimals, displayDecimals: token.display, isConnected, prefix: "Balance" });
+  return text ? <span className="num">{text}</span> : null;
 }
 
 interface BlockerInput {

@@ -1,6 +1,6 @@
 import { ARB_INPUT_USDC, MIN_SURPLUS_USDC, POOL_FEE_BPS, USDC_DECIMALS } from "@/config/contracts";
 import { bestRoute, gapBps, spotPriceUsdc } from "@/lib/amm";
-import { formatAmount, formatPercent } from "@/lib/format";
+import { formatAmount, formatPercent, PENDING_TEXT } from "@/lib/format";
 import type { PoolPair } from "./quote";
 import styles from "./trade.module.css";
 
@@ -17,7 +17,7 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
   const clearsThreshold =
     pools !== undefined &&
     bestRoute(ARB_INPUT_USDC, pools.A, pools.B, POOL_FEE_BPS).usdcOut >= ARB_INPUT_USDC + MIN_SURPLUS_USDC;
-  const pendingText = isError ? "Unavailable" : "Loading…";
+  const pendingText = isError ? PENDING_TEXT.unavailable : PENDING_TEXT.loading;
 
   return (
     <div className="panel">
@@ -62,7 +62,7 @@ interface FeedStatusProps {
 /** Says "Live" only once a price has actually been read. Shared with the order page's price panel. */
 export function FeedStatus({ isError, isLoaded, errorText }: FeedStatusProps) {
   if (isError) return <span className="danger">{errorText}</span>;
-  if (!isLoaded) return <span>Loading…</span>;
+  if (!isLoaded) return <span>{PENDING_TEXT.loading}</span>;
   return (
     <span className={`accent ${styles.live}`}>
       <span className={styles.dot} aria-hidden="true" />
@@ -81,7 +81,7 @@ interface MarketCellProps {
 }
 
 /** One price cell, shared with the order page's price panel. */
-export function MarketCell({ label, value, pendingText = "Loading…", unit, tone }: MarketCellProps) {
+export function MarketCell({ label, value, pendingText = PENDING_TEXT.loading, unit, tone }: MarketCellProps) {
   return (
     <div className={`cell ${styles.marketCell}`}>
       <span className="small muted">{label}</span>

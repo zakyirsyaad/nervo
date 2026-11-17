@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { ContractTable } from "@/components/ContractTable";
-import { ORDER_CONTRACTS } from "@/config/orders";
+import { ORDER_CONTRACTS, ORDER_STACK } from "@/config/orders";
 import { OrdersWorkspace } from "@/features/orders/OrdersWorkspace";
 
 export const metadata: Metadata = { title: "Protect" };
 
-// OrderReactive and the faucet sit at the same address on purpose (see ORDER_STACK in config/orders.ts).
+// Shown only while the two really share an address, so a redeploy at other nonces drops it by itself.
 const SHARED_ADDRESS_NOTE =
-  "OrderReactive and the faucet share an address on purpose. A contract's address comes from the deployer and how many transactions it has sent, and both were deployed at the same count, on two different chains.";
+  ORDER_STACK.orderReactive.toLowerCase() === ORDER_STACK.faucet.toLowerCase()
+    ? "OrderReactive and the faucet share an address on purpose. A contract's address comes from the deployer and how many transactions it has sent, and both were deployed at the same count, on two different chains."
+    : undefined;
 
 export default function OrdersPage() {
   return (

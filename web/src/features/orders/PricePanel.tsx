@@ -1,5 +1,5 @@
 import { gapBps, spotPriceUsdc } from "@/lib/amm";
-import { formatPercent } from "@/lib/format";
+import { formatPercent, PENDING_TEXT } from "@/lib/format";
 import { FeedStatus, MarketCell } from "../trade/MarketPanel";
 import type { Deployment } from "./orderDraft";
 import { formatPrice } from "./tokens";
@@ -15,9 +15,13 @@ export function PricePanel({ prices, deployment }: PricePanelProps) {
   const unichainPrice = prices.unichain ? spotPriceUsdc(prices.unichain) : undefined;
   const gap = basePrice !== undefined && unichainPrice !== undefined ? gapBps(unichainPrice, basePrice) : undefined;
   const isMissing = deployment === "missing";
-  const basePending = prices.isBaseError ? "Unavailable" : "Loading…";
-  const unichainPending = isMissing ? "Not deployed yet" : prices.isUnichainError ? "Unavailable" : "Loading…";
-  const gapPending = prices.isBaseError || prices.isUnichainError || isMissing ? "Needs both prices" : "Loading…";
+  const basePending = prices.isBaseError ? PENDING_TEXT.unavailable : PENDING_TEXT.loading;
+  const unichainPending = isMissing
+    ? "Not deployed yet"
+    : prices.isUnichainError
+      ? PENDING_TEXT.unavailable
+      : PENDING_TEXT.loading;
+  const gapPending = prices.isBaseError || prices.isUnichainError || isMissing ? "Needs both prices" : PENDING_TEXT.loading;
 
   return (
     <div className="panel">

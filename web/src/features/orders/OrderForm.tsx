@@ -5,7 +5,7 @@ import { WalletButton } from "@/components/WalletButton";
 import { orderChain } from "@/config/chains";
 import { DEFAULT_ORDER_FEE_WEI, MAX_WATCHED_PER_OWNER, ORDER_POOL_FEE_BPS } from "@/config/orders";
 import { spotPriceUsdc, type TokenSymbol } from "@/lib/amm";
-import { formatAmount, formatCompact, parseAmount } from "@/lib/format";
+import { balanceText, formatAmount, formatCompact, parseAmount } from "@/lib/format";
 import {
   defaultTriggerPrice,
   EXPIRY_CHOICES,
@@ -72,12 +72,13 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
   const minAmountOut = parseAmount(minOutShown, output.decimals);
   const lifetime = EXPIRY_CHOICES.find((choice) => choice.id === expiryId) ?? EXPIRY_CHOICES[0];
   const balance = wallet.balances?.[spec.tokenIn];
-  // No balance line until a wallet is connected, since there is nothing to read yet.
-  const balanceAside = !wallet.account
-    ? undefined
-    : balance === undefined
-      ? "Reading balance…"
-      : `On Unichain: ${formatAmount(balance, input.decimals, input.display)}`;
+  const balanceAside = balanceText({
+    balance,
+    decimals: input.decimals,
+    displayDecimals: input.display,
+    isConnected: Boolean(wallet.account),
+    prefix: "On Unichain:",
+  });
   const firesNow = basePrice !== undefined && Boolean(triggerPrice) && triggersImmediately(kind, triggerPrice ?? 0n, basePrice);
   const direction = spec.condition === "PriceAtOrBelow" ? "below" : "above";
   const isBusy = phase !== "idle";

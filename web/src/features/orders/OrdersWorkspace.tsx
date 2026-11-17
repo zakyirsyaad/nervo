@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ORDER_STACK } from "@/config/orders";
 import { revealIfOffscreen } from "@/lib/reveal";
 import { OrderForm } from "./OrderForm";
@@ -33,10 +33,18 @@ export function OrdersWorkspace() {
   const trail = useOrderTrail(selected);
   const selectedView = trail.snapshot?.order ?? myOrders.orders?.find((view) => view.ref.id === selected?.id);
 
+  // Set only by a new order, so picking an existing order from the list does not scroll the page.
+  const [placedId, setPlacedId] = useState<bigint>();
+
+  // After the commit, so the tracker is measured below the order row the new order adds above it.
+  useEffect(() => {
+    if (placedId !== undefined) revealIfOffscreen(trackerRef.current);
+  }, [placedId]);
+
   function handlePlaced(order: OrderRef) {
     myOrders.remember(order);
     setSelectedId(order.id);
-    revealIfOffscreen(trackerRef.current);
+    setPlacedId(order.id);
   }
 
   async function handleCancel(orderId: bigint) {

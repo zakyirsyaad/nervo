@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { revealIfOffscreen } from "@/lib/reveal";
 import { LoopTimeline } from "./LoopTimeline";
 import { MarketPanel } from "./MarketPanel";
@@ -17,10 +17,10 @@ export function TradeWorkspace() {
   const wallet = useWallet();
   const loop = useLoop(trackedSwap);
 
-  function handleSwapped(swap: TrackedSwap) {
-    setTrackedSwap(swap);
-    revealIfOffscreen(timelineRef.current);
-  }
+  // After the commit, so the timeline is measured where the new swap's layout puts it.
+  useEffect(() => {
+    if (trackedSwap) revealIfOffscreen(timelineRef.current);
+  }, [trackedSwap]);
 
   return (
     <div className={`container ${styles.workspace}`}>
@@ -29,7 +29,7 @@ export function TradeWorkspace() {
           pools={pools}
           wallet={wallet}
           isLoopPending={Boolean(trackedSwap) && !loop.status.isFinal}
-          onSwapped={handleSwapped}
+          onSwapped={setTrackedSwap}
         />
       </div>
       <div className={styles.right}>

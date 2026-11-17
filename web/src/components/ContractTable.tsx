@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { CHAIN_LABEL } from "@/config/chains";
 import type { ContractRow } from "@/config/contracts";
 import { ChainMark } from "./ChainMark";
@@ -7,7 +6,7 @@ import { HashLink } from "./HashLink";
 interface ContractTableProps {
   rows: readonly ContractRow[];
   /** One sentence under the table, for anything in it that would otherwise look like a mistake. */
-  note?: ReactNode;
+  note?: string;
 }
 
 export function ContractTable({ rows, note }: ContractTableProps) {
