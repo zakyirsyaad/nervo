@@ -36,12 +36,10 @@ const LATENCY_STATS = [
 ];
 
 const REPLAY_CELLS = [
-  { label: "Price gaps in 3 days", value: REPLAY.episodes },
-  { label: "Closed instantly by others", value: REPLAY.closedSameBlock },
-  ...REPLAY.viableAfter.map((entry) => ({
-    label: `Still open after ${entry.delaySeconds} s`,
-    value: entry.count,
-  })),
+  { label: "Token pairs replayed", value: REPLAY.pairs },
+  { label: "Price gaps worth trading", value: REPLAY.episodes },
+  { label: "Closed in the same block", value: REPLAY.closedSameBlock },
+  { label: "Still open 2 s later", value: REPLAY.viableAfter2s },
 ];
 
 export default function EvidencePage() {
@@ -209,15 +207,23 @@ export default function EvidencePage() {
         <div className="container split">
           <div className="lead stack">
             <div className="label">[ 4 · Would it make money for real? ]</div>
-            <h2 className="h2">On this token pair, mostly not. Here is why.</h2>
+            <h2 className="h2">Not on the markets we tested. Here is why.</h2>
             <p className="muted">
-              We took three days of real WETH/USDC trading on Base (11–13 November 2026, on Uniswap and Aerodrome) and
-              asked: how often did the two prices drift apart, and for how long?
+              We took three days of real trading (11–13 November 2026) and, for {REPLAY.pairs} token pairs on Base
+              from WETH/USDC to small meme coins, compared the two busiest pools on Uniswap and Aerodrome: how often
+              did their prices drift far enough apart to be worth trading, and for how long?
             </p>
             <p className="muted">
-              They drifted apart {REPLAY.episodes} times, but {REPLAY.closedSameBlock} of those gaps were closed
-              instantly by other traders. A trade that takes one to two seconds almost never gets there first. So this
-              project shows that the method works. It does not show that it beats the competition on this pair.
+              Other traders closed almost every gap inside the same block, and none was still open two seconds later.
+              On small coins the prices drift further apart, but never by more than the pools&apos; own fees (up to{" "}
+              {(REPLAY.widestFeeBandBps / 100).toFixed(2)}%), so there was nothing to gain.
+            </p>
+            <p className="muted">
+              Then we compared the price of ETH on Base and on Unichain, where no one can trade both sides in one
+              block. The two chains stayed {REPLAY.crossChainMedianGapBps} basis points apart at the median, and of{" "}
+              {REPLAY.crossChainEpisodes} gaps worth trading, only {REPLAY.crossChainViableAfter2s} was still open two
+              seconds later. This project proves the method and its speed. It does not beat the competition on these
+              markets.
             </p>
             {GITHUB_URL ? (
               <a href={`${GITHUB_URL}/tree/main/replay`} target="_blank" rel="noreferrer" className="link-row">

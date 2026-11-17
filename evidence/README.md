@@ -9,7 +9,9 @@ Recorded results behind the numbers in the main [README](../README.md). Each fil
 | [compare-2026-11-16.json](compare-2026-11-16.json) | `tools/compare_report.py` | **The comparison result**, computed from the run log and chain data |
 | [latency-2026-11-15.json](latency-2026-11-15.json) | `tools/latency_report.py` | First, partial run with the 2 demo-scenario callbacks only. Superseded by the 16 November file, which includes them |
 | [observer-2026-11-15.jsonl](observer-2026-11-15.jsonl) | `tools/observe.py` | Raw event stream of the first demo scenarios as one machine saw them, one JSON object per line |
-| [../replay/data/summary.json](../replay/data/summary.json) | `replay/replay.py` | Base mainnet replay summary |
+| [../replay/data/summary.json](../replay/data/summary.json) | `replay/replay.py` | Base mainnet replay of WETH/USDC |
+| [../replay/data/crosschain-summary.json](../replay/data/crosschain-summary.json) | `replay/crosschain.py` | ETH/USDC between Base and Unichain, English field names, with a sensitivity check on Unichain's one-second timestamps |
+| [../replay/data/pairs-summary.json](../replay/data/pairs-summary.json) | `replay/replay.py --all` | The same replay for ten pairs, English field names. `single_range_pct` is the share of episodes whose quote stays inside one tick range; `viable_2s_surplus_total` is the surplus still available 2 s after the signal |
 
 ## How latency is measured
 

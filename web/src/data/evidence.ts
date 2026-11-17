@@ -76,13 +76,16 @@ export const SCENARIOS: readonly Scenario[] = [
   },
 ];
 
-// Mainnet replay, from replay/data/summary.json (1,000 USDC input, 0.10 USDC threshold).
+// Mainnet replay at a threshold of about 0.10 USD: WETH/USDC at 1,000 USDC (replay/data/summary.json)
+// plus nine more pairs at about 100, 1,000 and 10,000 USD (replay/data/pairs-summary.json).
 export const REPLAY = {
-  episodes: 538,
-  closedSameBlock: 514,
-  viableAfter: [
-    { delaySeconds: 1, count: 2 },
-    { delaySeconds: 2, count: 0 },
-    { delaySeconds: 5, count: 4 },
-  ],
+  pairs: 10,
+  episodes: 538 + 231,
+  closedSameBlock: 514 + 226,
+  viableAfter2s: 0,
+  widestFeeBandBps: 125,
+  // Base against Unichain, ETH/USDC, 1,000 USDC (replay/data/crosschain-summary.json).
+  crossChainEpisodes: 150,
+  crossChainViableAfter2s: 1,
+  crossChainMedianGapBps: 1.6,
 } as const;

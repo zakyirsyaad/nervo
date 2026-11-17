@@ -129,13 +129,18 @@ Run log with every step's hashes: [evidence/compare-run-2026-11-16.json](evidenc
 
 ### Would it pay on a real market?
 
-On this pair, mostly not. We replayed 72 hours of WETH/USDC swaps on Base mainnet (Uniswap V3 0.05% and Aerodrome Slipstream, 11–13 November 2026) with a 1,000 USDC input and a 0.10 USDC threshold:
+Not on the markets we tested. We replayed 72 hours of mainnet swaps (11–13 November 2026), first between the two busiest pools of ten pairs on Base, then for ETH/USDC between Base and Unichain:
 
-| Episodes | Closed in the same block | Still viable at +1 s | +2 s | +5 s |
-|---|---|---|---|---|
-| 538 | 514 | 2 | 0 | 4 |
+| Market | Episodes at about 0.10 USD threshold | Closed at once | Still viable at +2 s |
+|---|---|---|---|
+| WETH/USDC on Base, 1,000 USDC | 538 | 514 in the same block | 0 |
+| Nine more pairs on Base (cbBTC, EURC, VIRTUAL, ZORA, MORPHO, AERO, DEGEN, BRETT), about 100 to 10,000 USD | 231 | 226 in the same block | 0 |
+| ETH/USDC, Base against Unichain, 1,000 USDC | 150 | 108 at the same timestamp | 1, worth 0.86 USDC |
 
-This pair is already arbitraged atomically inside the block, so a loop of about one second rarely gets there first. The testnet results prove the mechanism and the integration; they do not prove a market edge on this pair. The same data shows why the executor's re-check is necessary: most callbacks for this pair would arrive after the margin is gone. Method and assumptions: [replay/README.md](replay/README.md).
+- **On one chain**, arbitrage is settled inside the block by searchers who trade right behind the swap that opened the gap. Long-tail pairs have wider, longer-lived gaps, but they stay inside the pools' combined fees (up to 125 bps), so there is nothing to trade.
+- **Across chains**, where no one can settle both legs in one block, Base and Unichain still track each other within 1.6 bps at the median. The gap exceeded the combined fee for 0.08% of the time, and no gap lasted longer than 2 seconds.
+
+A loop that acts 1.4 to 2 seconds after the signal cannot win these races. So the testnet results prove the mechanism, the integration and the latency, not a market edge. The same data shows why both halves of the design matter: the Lasna filter avoids paying for callbacks that would be rejected, and the executor's re-check stops a late callback from trading at a loss. Method, per-pair tables and assumptions: [replay/README.md](replay/README.md).
 
 ## On-chain proof
 
@@ -282,7 +287,7 @@ See [docs/reproduce.md](docs/reproduce.md) for deploying both stacks, running th
 - **Small samples.** Latency rests on 12 callbacks and the comparison on one run of 12 steps per stack. The two stacks did not start from identical pool sizes (about 96.5 WETH / 311,000 USDC versus 100 / 300,000).
 - **200 ms resolution.** Latency comes from Base Sepolia block timestamps, so differences below one block are invisible.
 - **Fixed trade size.** Each opportunity trades 1,000 USDC regardless of the gap, so a large gap is closed only partly per round.
-- **No market edge on this pair.** See the replay above.
+- **No market edge on the markets tested.** Ten pairs on Base and ETH/USDC between Base and Unichain, replayed on mainnet; almost no gap stayed open long enough for a seconds-scale loop. See the replay above.
 
 ## License
 

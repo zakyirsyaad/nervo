@@ -13,8 +13,13 @@ REAL_USDC_OUT = 999604858
 USDC = replay.USDC
 
 
+REAL_TICK = -200223
+PAIR = replay.REFERENCE
+
+
 def make_point(ts_ms, block, uni_sqrt, aero_sqrt, tx="0x0"):
-    return replay.Point(ts_ms, block, tx, uni_sqrt, REAL_LIQUIDITY, aero_sqrt, REAL_LIQUIDITY, 150)
+    return replay.Point(ts_ms, block, tx, uni_sqrt, REAL_LIQUIDITY, REAL_TICK, 500,
+                        aero_sqrt, REAL_LIQUIDITY, REAL_TICK, 150)
 
 
 def shifted(sqrt_price, bps):
@@ -58,7 +63,7 @@ class EpisodeTest(unittest.TestCase):
 
     def test_no_gap_means_no_episode(self):
         points = [make_point(t, t // 200, self.base, self.base) for t in range(0, 8000, 200)]
-        episodes, candidates = replay.find_episodes(points, 1_000 * USDC, 100_000)
+        episodes, candidates = replay.find_episodes(PAIR, points, 1_000 * USDC, 100_000)
         self.assertEqual((episodes, candidates), ([], 0))
 
     def test_gap_closed_in_same_block_does_not_survive(self):
@@ -66,9 +71,9 @@ class EpisodeTest(unittest.TestCase):
                   make_point(200, 2, self.base, self.rich, "0xb"),
                   make_point(200, 2, self.base, self.base, "0xc")]
         points += [make_point(t, t // 200 + 1, self.base, self.base, hex(t)) for t in range(400, 8000, 200)]
-        episodes, _ = replay.find_episodes(points, 1_000 * USDC, 100_000)
+        episodes, _ = replay.find_episodes(PAIR, points, 1_000 * USDC, 100_000)
         self.assertEqual(len(episodes), 1)
-        self.assertEqual(episodes[0]["direction"], "beli_uni_jual_aero")
+        self.assertEqual(episodes[0]["direction"], replay.A_THEN_B)  # buy WETH on Uniswap, sell on Aerodrome
         self.assertEqual(episodes[0]["duration_ms"], 0)
         self.assertTrue(all(value < 100_000 for value in episodes[0]["later"].values()))
 
@@ -76,7 +81,7 @@ class EpisodeTest(unittest.TestCase):
         points = [make_point(0, 1, self.base, self.base, "0xa")]
         points += [make_point(t, t // 200 + 1, self.base, self.rich, hex(t)) for t in range(200, 3200, 200)]
         points += [make_point(t, t // 200 + 1, self.base, self.base, hex(t)) for t in range(3200, 9000, 200)]
-        episodes, _ = replay.find_episodes(points, 1_000 * USDC, 100_000)
+        episodes, _ = replay.find_episodes(PAIR, points, 1_000 * USDC, 100_000)
         self.assertEqual(len(episodes), 1)
         later = episodes[0]["later"]
         self.assertGreaterEqual(later[1000], 100_000)
@@ -86,7 +91,7 @@ class EpisodeTest(unittest.TestCase):
 
     def test_signal_too_close_to_end_of_data_is_excluded(self):
         points = [make_point(0, 1, self.base, self.base, "0xa"), make_point(200, 2, self.base, self.rich, "0xb")]
-        episodes, candidates = replay.find_episodes(points, 1_000 * USDC, 100_000)
+        episodes, candidates = replay.find_episodes(PAIR, points, 1_000 * USDC, 100_000)
         self.assertEqual((len(episodes), candidates), (0, 1))
 
     def test_block_end_points_keep_last_state_per_block(self):

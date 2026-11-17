@@ -18,8 +18,8 @@ broadcast/**/dry-run/
 __pycache__/
 *.pyc
 
-# Replay input (about 24 MB), rebuilt by replay/fetch_swaps.py
-replay/data/swaps.csv
+# Replay inputs (WETH/USDC alone is about 24 MB), rebuilt by replay/fetch_swaps.py
+replay/data/swaps*.csv
 
 # OS
 .DS_Store
