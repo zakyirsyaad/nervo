@@ -8,6 +8,7 @@ export function SiteFooter() {
         <span>Arb Loop · Built for the Reactive Omni Buildathon · Testnet only, no real funds.</span>
         <nav aria-label="Footer">
           <Link href="/trade">Trade</Link>
+          <Link href="/orders">Protect</Link>
           <Link href="/evidence">Evidence</Link>
           {GITHUB_URL ? (
             <a href={GITHUB_URL} target="_blank" rel="noreferrer">

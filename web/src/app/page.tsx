@@ -154,6 +154,24 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="section" aria-label="Protective orders">
+        <div className="container tight">
+          <div className={`panel ${styles.protect}`}>
+            <div className="stack">
+              <div className="label">[ Same loop, another use ]</div>
+              <h2 className="h3">Use the same loop to protect a position.</h2>
+              <p className="muted">
+                Set a stop-loss on Unichain Sepolia that reacts to the price on Base Sepolia and fills by itself within
+                seconds.
+              </p>
+            </div>
+            <Link href="/orders" className="btn">
+              Set a protective order
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <div className="container stack loose">
           <div className="stack">

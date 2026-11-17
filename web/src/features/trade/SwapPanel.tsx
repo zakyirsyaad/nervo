@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { WalletButton } from "@/components/WalletButton";
+import { originChain } from "@/config/chains";
 import { ADDRESSES, POOL_FEE_BPS, USDC_DECIMALS, WETH_DECIMALS } from "@/config/contracts";
 import type { TokenSymbol } from "@/lib/amm";
 import { formatAmount, formatPercent, parseAmount } from "@/lib/format";
@@ -182,7 +183,7 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
 
       <div className={`panel-row ${styles.action}`}>
         {!wallet.account || wallet.isWrongNetwork ? (
-          <WalletButton block />
+          <WalletButton block requiredChain={originChain} />
         ) : (
           <>
             <button type="button" className="btn primary block" disabled={Boolean(blocker) || isBusy} onClick={handleSwap}>

@@ -1,10 +1,9 @@
-import { HashLink } from "@/components/HashLink";
-import type { ChainKey } from "@/config/chains";
 import { USDC_DECIMALS } from "@/config/contracts";
 import { LATENCIES_MS } from "@/data/evidence";
 import { formatAmount, formatSeconds } from "@/lib/format";
 import { percentile } from "@/lib/latency";
 import type { LoopStatusKind } from "./loop";
+import { TimelineStep as Step } from "./TimelineStep";
 import type { DecisionRecord, OutcomeRecord } from "./tracker";
 import type { LoopView } from "./useLoop";
 import styles from "./trade.module.css";
@@ -38,16 +37,6 @@ const STALLED: Partial<Record<LoopStatusKind, { message: string; action: string 
     message: "We lost the connection while following your swap. Your swap is safe; you can still open it with the link above.",
     action: "Try again",
   },
-};
-
-type StepState = "done" | "active" | "pending" | "off";
-
-const STEP_MARK: Record<StepState, string> = { done: "✓", active: "●", pending: "", off: "–" };
-const STEP_STATE_TEXT: Record<StepState, string> = {
-  done: "completed",
-  active: "in progress",
-  pending: "not started",
-  off: "did not happen",
 };
 
 interface LoopTimelineProps {
@@ -170,35 +159,4 @@ function outcomeDetail(outcome: OutcomeRecord | undefined, kind: LoopStatusKind)
     return "The prices moved back before the trade arrived, so it was safely cancelled. No money was lost.";
   }
   return "The trade was safely cancelled. No money was lost.";
-}
-
-interface StepProps {
-  index: string;
-  state: StepState;
-  title: string;
-  /** One plain sentence about the step. */
-  detail: string;
-  /** Technical reference for people who want to check it on an explorer. */
-  tech?: string;
-  link?: { chain: ChainKey; hash: string };
-}
-
-function Step({ index, state, title, detail, tech, link }: StepProps) {
-  return (
-    <li className={`${styles.stepRow} ${styles[state]}`} aria-current={state === "active" ? "step" : undefined}>
-      <span className={`mono ${styles.stepIndex}`}>
-        {index}{" "}
-        <span aria-hidden="true" className={state === "active" ? "pulse" : undefined}>
-          {STEP_MARK[state]}
-        </span>
-        <span className="sr-only">{STEP_STATE_TEXT[state]}</span>
-      </span>
-      <div className={styles.stepText}>
-        <span className={styles.stepTitle}>{title}</span>
-        <span className="small muted">{detail}</span>
-        {tech ? <span className={styles.stepTech}>{tech}</span> : null}
-      </div>
-      {link ? <HashLink chain={link.chain} hash={link.hash} /> : null}
-    </li>
-  );
 }

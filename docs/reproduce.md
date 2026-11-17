@@ -6,7 +6,7 @@ This guide deploys both stacks, runs the demo scenarios, and re-runs the latency
 
 - [Foundry](https://book.getfoundry.sh/) and Python 3.9+. The Python tools use only the standard library.
 - A Foundry keystore account (`cast wallet import <name> --interactive`). Commands below write it as `<account>`.
-- Base Sepolia ETH for gas and for the executor's callback budget, and lREACT on Reactive Lasna for the Reactive contract. See the Reactive Network docs for the [Lasna faucet](https://dev.reactive.network/).
+- Base Sepolia ETH for gas and for the executor's callback budget, and lREACT on Reactive Lasna for the Reactive contract. To get lREACT, send Sepolia ETH to the Reactive faucet contract on Ethereum Sepolia, `0x9b9BB25f1A81078C544C829c5EB7822d747Cf434` (1 ETH gives 100 lREACT, at most 5 ETH per transaction; see the [Reactive docs](https://dev.reactive.network/reactive-mainnet)).
 - `cp .env.example .env`. Forge scripts read addresses from the environment, and the Python tools load `.env` themselves. To make `.env` visible to forge scripts, export it first: `set -a; . ./.env; set +a`.
 
 Scripts that use `msg.sender` as the owner (for example `DeployFaucet`) also need `--sender <your address>`.
@@ -142,6 +142,44 @@ WETH_ADDRESS=$WETH USDC_ADDRESS=$USDC forge script script/DeployFaucet.s.sol:Dep
 
 It funds 500 claims of 5 WETH and 10,000 USDC, one claim per address per day. Put the printed address in `web/.env.local` as `NEXT_PUBLIC_FAUCET_ADDRESS`.
 
-## 7. Mainnet replay
+## 7. Protective orders
+
+The order book lives on Unichain Sepolia and is triggered by Pool A of the main stack on Base Sepolia. The Reactive contract on Lasna is deployed second, at an address predicted from the deployer's Lasna nonce, exactly as for the arbitrage stack.
+
+Read the Lasna nonce and the current Base Pool A price (seed the Unichain pool near it):
+
+```bash
+cast nonce <your address> --rpc-url lasna
+```
+
+```bash
+cast call 0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F "getReserves()(uint256,uint256)" --rpc-url base_sepolia
+```
+
+Deploy the test tokens, the execution pool, a faucet and the order book on Unichain Sepolia. `ORDERBOOK_FUNDING_WEI` pays for execution callbacks; every order also adds its 0.0001 ETH fee.
+
+```bash
+LASNA_NONCE=<nonce> ORDER_POOL_WETH=100000000000000000000 ORDER_POOL_USDC=332800000000 ORDERBOOK_FUNDING_WEI=20000000000000000 forge script script/DeployOrders.s.sol --rpc-url unichain_sepolia --account <account> --sender <your address> --broadcast
+```
+
+Deploy the Reactive contract on Lasna with the printed `ORDER_BOOK` and `EXPECTED_ORDER_REACTIVE`. The script aborts if the address does not match.
+
+```bash
+ORDER_BOOK=<address> EXPECTED_ORDER_REACTIVE=<address> REACTIVE_FUNDING_WEI=3000000000000000000 forge script script/DeployOrderReactive.s.sol --rpc-url lasna --account <account> --sender <your address> --broadcast
+```
+
+Run one order end to end: place a stop-loss on Unichain, wait for Lasna to mirror it, then sell WETH on Base Pool A so the price falls through the trigger.
+
+```bash
+ORDER_BOOK=<address> ORDER_FAUCET=<address> TRIGGER_PRICE=3300000000 MIN_OUT=320000000 forge script script/OrderScenario.s.sol --sig "place()" --rpc-url unichain_sepolia --account <account> --sender <your address> --broadcast
+```
+
+```bash
+forge script script/OrderScenario.s.sol --sig "drop()" --rpc-url base_sepolia --account <account> --sender <your address> --broadcast
+```
+
+Unichain Sepolia ETH can be bridged from Ethereum Sepolia by sending ETH to its L1StandardBridge, `0xea58fcA6849d79EAd1f26608855c2D6407d54Ce2`.
+
+## 8. Mainnet replay
 
 See [replay/README.md](../replay/README.md). It needs no keys: it reads public Base mainnet logs.

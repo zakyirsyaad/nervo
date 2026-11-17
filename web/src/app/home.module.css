@@ -93,3 +93,17 @@
   align-items: baseline;
   gap: 4px 16px;
 }
+
+.protect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  padding: 24px;
+}
+
+.protect > .stack {
+  flex: 1 1 320px;
+  min-width: 0;
+}

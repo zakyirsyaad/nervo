@@ -1,7 +1,9 @@
 import { defineChain, type Hex } from "viem";
-import { baseSepolia } from "viem/chains";
+import { baseSepolia, unichainSepolia } from "viem/chains";
 
 export const originChain = baseSepolia;
+/** Chain where protective orders are escrowed and filled. */
+export const orderChain = unichainSepolia;
 
 export const lasna = defineChain({
   id: 5318007,
@@ -14,21 +16,28 @@ export const lasna = defineChain({
 
 export const BASE_SEPOLIA_RPC_URL = "https://sepolia.base.org";
 export const BASE_SEPOLIA_FAUCET_URL = "https://docs.base.org/base-chain/tools/network-faucets";
+export const UNICHAIN_SEPOLIA_RPC_URL = "https://sepolia.unichain.org";
+// The Unichain docs page that lists the Unichain Sepolia ETH faucets.
+export const UNICHAIN_SEPOLIA_FAUCET_URL = "https://docs.unichain.org/docs/tools/faucets";
 
-const BASE_EXPLORER = "https://sepolia.basescan.org";
-const LASNA_EXPLORER = "https://lasna.reactscan.net";
+export type ChainKey = "base" | "lasna" | "unichain";
 
-export type ChainKey = "base" | "lasna";
+const EXPLORER: Record<ChainKey, string> = {
+  base: "https://sepolia.basescan.org",
+  lasna: "https://lasna.reactscan.net",
+  unichain: "https://sepolia.uniscan.xyz",
+};
 
 export const CHAIN_LABEL: Record<ChainKey, string> = {
   base: "Base Sepolia · 84532",
   lasna: "Reactive Lasna · 5318007",
+  unichain: "Unichain Sepolia · 1301",
 };
 
 export function txUrl(chain: ChainKey, hash: Hex | string): string {
-  return `${chain === "base" ? BASE_EXPLORER : LASNA_EXPLORER}/tx/${hash}`;
+  return `${EXPLORER[chain]}/tx/${hash}`;
 }
 
 export function addressUrl(chain: ChainKey, address: string): string {
-  return `${chain === "base" ? BASE_EXPLORER : LASNA_EXPLORER}/address/${address}`;
+  return `${EXPLORER[chain]}/address/${address}`;
 }

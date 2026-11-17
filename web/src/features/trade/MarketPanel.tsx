@@ -57,7 +57,8 @@ interface MarketCellProps {
   tone?: "ok";
 }
 
-function MarketCell({ label, value, unit, tone }: MarketCellProps) {
+/** One price cell, shared with the order page's price panel. */
+export function MarketCell({ label, value, unit, tone }: MarketCellProps) {
   return (
     <div className={`cell ${styles.marketCell}`}>
       <span className="small muted">{label}</span>

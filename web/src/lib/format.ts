@@ -14,6 +14,11 @@ export function formatAmount(value: bigint, decimals: number, displayDecimals: n
   return `${whole}.${fraction.padEnd(displayDecimals, "0")}`;
 }
 
+/** Like formatAmount, without trailing zeros: 0.0010 -> "0.001", 1.00 -> "1". */
+export function formatCompact(value: bigint, decimals: number, maxDecimals: number): string {
+  return formatAmount(value, decimals, maxDecimals).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+
 /** Parses user input into base units. Returns null when the text is not a valid amount. */
 export function parseAmount(text: string, decimals: number): bigint | null {
   const trimmed = text.trim();
@@ -42,4 +47,11 @@ export function formatPercent(bps: number): string {
 
 export function formatSeconds(ms: number): string {
   return `${(ms / 1000).toFixed(1)} seconds`;
+}
+
+/** Whole seconds in words, e.g. 4 -> "4 seconds". Zero means both blocks carry the same second. */
+export function formatWholeSeconds(seconds: number): string {
+  if (seconds < 1) return "under 1 second";
+  if (seconds === 1) return "1 second";
+  return `${groupThousands(String(Math.round(seconds)))} seconds`;
 }

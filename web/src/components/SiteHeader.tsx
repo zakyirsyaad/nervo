@@ -7,12 +7,20 @@ import { WalletButton } from "./WalletButton";
 
 const NAV_LINKS = [
   { href: "/trade", label: "Trade" },
+  { href: "/orders", label: "Protect" },
   { href: "/evidence", label: "Evidence" },
   { href: "/#contracts", label: "Contracts" },
 ] as const;
 
+/** Network the current page asks the wallet to use. */
+const PAGE_CHAIN = {
+  base: { label: "BASE SEPOLIA", brand: "Base", color: "var(--base-brand)" },
+  unichain: { label: "UNICHAIN SEPOLIA", brand: "Unichain", color: "var(--unichain-brand)" },
+} as const;
+
 export function SiteHeader() {
   const pathname = usePathname();
+  const chain = pathname === "/orders" ? PAGE_CHAIN.unichain : PAGE_CHAIN.base;
 
   return (
     <header className="site-header">
@@ -33,10 +41,10 @@ export function SiteHeader() {
           ) : null}
         </nav>
         <div className="chain-badge">
-          <svg width="16" height="16" viewBox="0 0 16 16" role="img" aria-label="Base">
-            <rect width="16" height="16" rx="1.5" fill="var(--base-brand)" />
+          <svg width="16" height="16" viewBox="0 0 16 16" role="img" aria-label={chain.brand}>
+            <rect width="16" height="16" rx="1.5" fill={chain.color} />
           </svg>
-          <span>BASE SEPOLIA</span>
+          <span>{chain.label}</span>
         </div>
         <WalletButton />
       </div>

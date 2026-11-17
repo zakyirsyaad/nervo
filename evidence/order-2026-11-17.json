@@ -1,0 +1,78 @@
+{
+ "description": "First protective order on testnet: a stop-loss on Unichain Sepolia triggered by the price of Pool A on Base Sepolia, decided on Reactive Lasna.",
+ "contracts": {
+  "order_book": {
+   "chain": "unichain-sepolia",
+   "chain_id": 1301,
+   "address": "0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b"
+  },
+  "order_reactive": {
+   "chain": "lasna",
+   "chain_id": 5318007,
+   "address": "0xc02a210DC8d74118205100Bb3744ed09d522fFCf"
+  },
+  "price_pool": {
+   "chain": "base-sepolia",
+   "chain_id": 84532,
+   "address": "0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F"
+  },
+  "execution_pool": {
+   "chain": "unichain-sepolia",
+   "chain_id": 1301,
+   "address": "0xb790467931Ad6694747bB90c96ac9b07c0c4DE01"
+  }
+ },
+ "order": {
+  "id": 1,
+  "kind": "stop-loss",
+  "token_in": "WETH",
+  "amount_in": "0.1",
+  "trigger_price_usdc": "3300.00",
+  "min_amount_out_usdc": "320.00"
+ },
+ "steps": [
+  {
+   "step": "OrderPlaced",
+   "chain": "unichain-sepolia",
+   "block": 68055182,
+   "ts_ms": 1794907610000,
+   "tx": "0xe2fd4f048a4c02a1b702058ddd9621206de0ca27863b1b316ccd74c5adb1b1fa"
+  },
+  {
+   "step": "OrderMirrored (Open, Placed)",
+   "chain": "lasna",
+   "block": 8560254,
+   "tx": "0x8e07531459fbaded924fd0b9d72d541dc9df5c5de6b48f203b6a8c01007541af"
+  },
+  {
+   "step": "Price drop: swap on Pool A",
+   "chain": "base-sepolia",
+   "block": 59929137,
+   "ts_ms": 1794907696200,
+   "tx": "0x24fb6e5e3602fc651f2795976b3b1668811d4fc8ade1d4f0008e4ca96f3b69d2",
+   "price_usdc": "3272.718824"
+  },
+  {
+   "step": "OrderTriggered",
+   "chain": "lasna",
+   "block": 8560332,
+   "tx": "0x596372975f60279372d4553564566845653a5efa1409c2be8e368fc0cc2cc5bd"
+  },
+  {
+   "step": "OrderOutcome (Filled)",
+   "chain": "unichain-sepolia",
+   "block": 68055270,
+   "ts_ms": 1794907698000,
+   "tx": "0xf077bb612534f249fb02affb86c00295c292adb96a7b20e42673862fca504a59",
+   "amount_out_usdc": "331.471123"
+  },
+  {
+   "step": "OrderMirrored (Closed, Filled)",
+   "chain": "lasna",
+   "block": 8560334,
+   "tx": "0x08b144ef574ac574434e883203d20318d0cd527cffc51ba394e921c20ff18388"
+  }
+ ],
+ "latency_ms": 1800,
+ "latency_note": "Base Sepolia trigger block to Unichain Sepolia fill block. Unichain timestamps are whole seconds, so the fill happened between 1.8 and 2.8 s after the trigger block."
+}

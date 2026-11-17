@@ -15,6 +15,7 @@ remappings = [
 [rpc_endpoints]
 base_sepolia = "https://sepolia.base.org"
 lasna = "https://lasna-rpc.rnk.dev/"
+unichain_sepolia = "https://sepolia.unichain.org"
 
 [fmt]
 bracket_spacing = true

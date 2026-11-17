@@ -30,6 +30,11 @@ DEPLOYED: List[Tuple[str, str, str, str]] = [
     ("ConstantProductPool.sol", "ConstantProductPool", "0x97898610adD7F402C9D6612e5cF69e395eba7AC0", "base_sepolia"),
     ("ConstantProductPool.sol", "ConstantProductPool", "0xE4140Ea6a6152F6F0cf02D13a56B7A7F60781105", "base_sepolia"),
     ("ArbReactive.sol", "ArbReactive", "0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F", "lasna"),
+    # Protective orders
+    ("OrderBook.sol", "OrderBook", "0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b", "unichain_sepolia"),
+    ("ConstantProductPool.sol", "ConstantProductPool", "0xb790467931Ad6694747bB90c96ac9b07c0c4DE01", "unichain_sepolia"),
+    ("TestFaucet.sol", "TestFaucet", "0xc02a210DC8d74118205100Bb3744ed09d522fFCf", "unichain_sepolia"),
+    ("OrderReactive.sol", "OrderReactive", "0xc02a210DC8d74118205100Bb3744ed09d522fFCf", "lasna"),
 ]
 
 

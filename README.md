@@ -1,21 +1,25 @@
 # Arb Loop
 
-**Cross-chain arbitrage that decides on Reactive Lasna and trades on Base Sepolia, in a median of 1.4 seconds, with no off-chain bot.**
+**One reactive loop, two uses: cross-chain arbitrage on Base Sepolia and stop-loss orders on Unichain Sepolia that react to the Base price. Decided on Reactive Lasna in under two seconds, with no off-chain bot.**
 
 Entry for the **Every Second Counts** track of the [Reactive Omni Buildathon](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail).
 
 A swap on one of two WETH/USDC pools on Base Sepolia opens a price gap. A Reactive contract on Lasna sees the pool event, quotes the round trip in both directions, and requests a callback only when the gap clears a 2 USDC surplus. An executor on Base Sepolia re-checks the quote against live reserves and either trades both legs atomically or records why it skipped. Both decisions are on-chain events you can audit.
 
+The same loop also protects positions. A user places a stop-loss, take-profit or limit buy on Unichain Sepolia; a second Reactive contract mirrors the order book from its events, watches the price on Base Sepolia, and makes the order book execute the order on Unichain within about two seconds of the trigger. No keeper or server watches the price.
+
 | | |
 |---|---|
 | Median latency, swap to callback | **1.4 s** (p95 2.0 s, 12 of 12 callbacks arrived) |
 | Destination fees saved by filtering on Lasna | **56%**, with the same 3 trades executed |
-| Contracts | 2 core contracts, 3 test fixtures, 76 Foundry tests |
-| Web app | Live prices, swap, faucet, and a tracker that follows your swap across both chains ([web/](web/)) |
+| Protective orders | Stop-loss on Unichain filled **1.8 s** after the Base price crossed its trigger ([proof](#protective-orders)) |
+| Contracts | 4 core contracts, 3 test fixtures, 157 Foundry tests including invariants |
+| Web app | Live prices, swap, protective orders, faucets, and trackers that follow each loop across chains ([web/](web/)) |
 
 ## Contents
 
 - [How it works](#how-it-works)
+- [Protective orders](#protective-orders)
 - [Why it needs Reactive](#why-it-needs-reactive)
 - [Results](#results)
 - [On-chain proof](#on-chain-proof)
@@ -81,6 +85,53 @@ sequenceDiagram
 | `SkippedInvalidRoute`, `SkippedInputOutOfBounds` | Request outside the executor's limits |
 | `SkippedInsufficientInventory` | Executor holds less USDC than the input |
 | `SwapReverted` | A swap reverted, or the realised surplus fell short; both legs rolled back |
+
+## Protective orders
+
+Arbitrage only pays if you beat other traders to a price gap, and the [market replay](#would-it-pay-on-a-real-market) shows that on Base and Unichain they close gaps within a second. A protective order has no race to win: the order is the user's own, and what matters is that it fires reliably within seconds of the price crossing, without a bot running somewhere. The same loop does that.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant OB as OrderBook<br/>Unichain Sepolia
+    participant OR as OrderReactive<br/>Reactive Lasna
+    participant P as Pool A<br/>Base Sepolia
+    U->>OB: placeOrder() with escrow and a 0.0001 ETH fee
+    OB-->>OR: OrderPlaced log
+    OR->>OR: mirror the order (OrderMirrored)
+    P-->>OR: ReserveUpdate log with a new price
+    OR->>OR: price crossed the trigger (OrderTriggered)
+    OR->>OB: executeOrder() through the callback proxy
+    OB->>OB: swap on the Unichain pool, at least minAmountOut
+    OB-->>OR: OrderOutcome log closes the mirror
+```
+
+| Order | Escrow | Fires when the Base price is |
+|---|---|---|
+| Stop-loss | WETH | at or below the trigger |
+| Take-profit | WETH | at or above the trigger |
+| Limit buy | USDC | at or below the trigger |
+
+**First order on testnet**, 17 November 2026: a stop-loss selling 0.1 WETH at a trigger of 3,300 USDC.
+
+| Stage | Chain | Block | Transaction |
+|---|---|---|---|
+| `OrderPlaced` | Unichain Sepolia | 68055182 | [`0xe2fd4f04…adb1b1fa`](https://sepolia.uniscan.xyz/tx/0xe2fd4f048a4c02a1b702058ddd9621206de0ca27863b1b316ccd74c5adb1b1fa) |
+| `OrderMirrored` (Open) | Lasna | 8560254 | [`0x8e075314…007541af`](https://lasna.reactscan.net/tx/0x8e07531459fbaded924fd0b9d72d541dc9df5c5de6b48f203b6a8c01007541af) |
+| Swap drops Pool A to 3,272.72 | Base Sepolia | 59929137 | [`0x24fb6e5e…6f3b69d2`](https://sepolia.basescan.org/tx/0x24fb6e5e3602fc651f2795976b3b1668811d4fc8ade1d4f0008e4ca96f3b69d2) |
+| `OrderTriggered` | Lasna | 8560332 | [`0x59637297…cc2cc5bd`](https://lasna.reactscan.net/tx/0x596372975f60279372d4553564566845653a5efa1409c2be8e368fc0cc2cc5bd) |
+| `OrderOutcome` (Filled, 331.47 USDC) | Unichain Sepolia | 68055270 | [`0xf077bb61…ca504a59`](https://sepolia.uniscan.xyz/tx/0xf077bb612534f249fb02affb86c00295c292adb96a7b20e42673862fca504a59) |
+| `OrderMirrored` (Closed) | Lasna | 8560334 | [`0x08b144ef…0ff18388`](https://lasna.reactscan.net/tx/0x08b144ef574ac574434e883203d20318d0cd527cffc51ba394e921c20ff18388) |
+
+From the Base block that crossed the trigger to the Unichain block that filled the order: 1.8 s. Unichain timestamps are whole seconds, so the fill happened 1.8 to 2.8 s after the trigger block. Record: [evidence/order-2026-11-17.json](evidence/order-2026-11-17.json).
+
+**Built for strangers to use.** The order book is a public testnet contract, so it is hardened against griefing as well as theft:
+
+- Each order prepays its own execution with a 0.0001 ETH fee, has a minimum size (0.001 WETH or 1 USDC), a non-zero `minAmountOut`, and a lifetime of at most 7 days.
+- The Lasna mirror watches at most 64 orders, at most 4 per owner, evicts expired orders, stops after 5 trigger attempts or 3 slippage failures, re-arms a callback that is lost for 300 s, and rotates its scan so no order starves the others.
+- Only the owner can cancel, and cancelling always refunds the escrow. The order book's owner can withdraw only callback funding, never escrow.
+- An invariant suite feeds random order and price logs and checks that the mirror never tracks a dead order, never exceeds the per-owner cap, and never requests more than 5 callbacks for one order.
 
 ## Why it needs Reactive
 
@@ -200,16 +251,31 @@ Raw event stream as seen by one observer: [evidence/observer-2026-11-15.jsonl](e
 
 The comparison stack's `ArbReactive` happens to share an address with the main stack's Pool A: they are on different chains, and both addresses come from the same deployer's nonces.
 
+**Protective orders**, deployed 17 November 2026.
+
+| Contract | Chain | Address |
+|---|---|---|
+| OrderReactive | Reactive Lasna (5318007) | [`0xc02a210DC8d74118205100Bb3744ed09d522fFCf`](https://lasna.reactscan.net/address/0xc02a210DC8d74118205100Bb3744ed09d522fFCf) |
+| OrderBook | Unichain Sepolia (1301) | [`0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b`](https://sepolia.uniscan.xyz/address/0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b) |
+| Execution pool (WETH/USDC) | Unichain Sepolia | [`0xb790467931Ad6694747bB90c96ac9b07c0c4DE01`](https://sepolia.uniscan.xyz/address/0xb790467931Ad6694747bB90c96ac9b07c0c4DE01) |
+| Test WETH | Unichain Sepolia | [`0x0f70a79D1a0DFCB61005AF03084d3bED0e71E932`](https://sepolia.uniscan.xyz/address/0x0f70a79D1a0DFCB61005AF03084d3bED0e71E932) |
+| Test USDC | Unichain Sepolia | [`0x29583A3d63FD02f1bE462d4b6A1B1BeCeFcaFB87`](https://sepolia.uniscan.xyz/address/0x29583A3d63FD02f1bE462d4b6A1B1BeCeFcaFB87) |
+| Test token faucet | Unichain Sepolia | [`0xc02a210DC8d74118205100Bb3744ed09d522fFCf`](https://sepolia.uniscan.xyz/address/0xc02a210DC8d74118205100Bb3744ed09d522fFCf) |
+| Price source: Pool A of the main stack | Base Sepolia | [`0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F`](https://sepolia.basescan.org/address/0x82DEA86F73edF0CC76cd2Ff4Ae8612380e63CE6F) |
+
+Several addresses repeat across chains (for example the Unichain test WETH and the Lasna `ArbReactive`). They are different contracts: one deployer creates them, and a contract address depends only on the deployer and its nonce on each chain.
+
 **Reactive Network system addresses**
 
 | Chain | Chain id | Address |
 |---|---|---|
 | Base Sepolia | 84532 | Callback proxy `0x476F44b11F5C942c58f4c8E3d0300E5710743585` |
+| Unichain Sepolia | 1301 | Callback proxy `0x775c9B990ADe401060B78D0e98684eEf8d2466C1` |
 | Reactive Lasna | 5318007 | System contract `0x8888888888888888888888888888888888888888` |
 
 Deployment transactions are recorded in [broadcast/](broadcast/).
 
-**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of all eleven contracts above with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
+**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of all fifteen contracts above with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
 
 ```bash
 forge build && python3 tools/verify_deployed.py
@@ -232,16 +298,18 @@ The executor treats every callback as untrusted input and never takes the Lasna 
 src/
   ArbReactive.sol            Lasna: subscriptions, snapshots, margin check, callback request
   ArbExecutor.sol            Base Sepolia: callback auth, re-quote, atomic two-leg swap
+  orders/OrderBook.sol       Unichain Sepolia: escrow, protective orders, authenticated execution
+  orders/OrderReactive.sol   Lasna: order-book mirror, price watch, trigger callbacks
   libraries/ArbMath.sol      Constant-product quote shared by both contracts
   interfaces/IArbPool.sol    Pool interface and the ReserveUpdate event
   fixtures/                  Test pool, ERC-20 test token, public faucet
-script/                      Deploy scripts and the demo scenarios
+script/                      Deploy scripts and the demo scenarios, including OrderScenario for one order loop
 test/                        Foundry unit, integration and scenario tests
 tools/                       Benchmark driver, latency and comparison reports (Python, no dependencies)
 replay/                      Base mainnet market replay
 evidence/                    Recorded benchmark and comparison results
 broadcast/                   Forge records of every testnet deployment and scenario run
-web/                         Next.js app: live prices, swap, faucet, loop tracker, results
+web/                         Next.js app: live prices, swap, protective orders, faucets, loop trackers, results
 docs/reproduce.md            Step-by-step deploy and benchmark guide
 ```
 
@@ -267,7 +335,7 @@ python3 -m unittest discover -s tools -p "test_*.py"
 cd replay && python3 -m unittest -v
 ```
 
-The Foundry suite covers the three scenarios end to end, incomplete and stale snapshots, duplicate and out-of-order logs, wrong callback callers, replay after execution, expiry, input bounds, missing inventory, and a pool that shortchanges the second leg.
+The Foundry suite covers the three scenarios end to end, incomplete and stale snapshots, duplicate and out-of-order logs, wrong callback callers, replay after execution, expiry, input bounds, missing inventory, and a pool that shortchanges the second leg. For protective orders it covers every outcome path, the mirror's caps and timeouts, an end-to-end loop through mock Reactive contracts, and invariants under random order and price logs.
 
 ### Web app
 

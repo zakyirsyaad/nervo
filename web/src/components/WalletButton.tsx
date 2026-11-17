@@ -1,14 +1,18 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useSwitchChain } from "wagmi";
 
 interface WalletButtonProps {
   /** Renders the full-width primary variant used inside panels. */
   block?: boolean;
+  /** Network the surrounding form sends transactions on. The button offers to switch to it. */
+  requiredChain?: { id: number; name: string };
 }
 
-export function WalletButton({ block = false }: WalletButtonProps) {
+export function WalletButton({ block = false, requiredChain }: WalletButtonProps) {
   const sizeClass = block ? "btn primary block" : "btn";
+  const { switchChain } = useSwitchChain();
 
   return (
     <ConnectButton.Custom>
@@ -20,10 +24,17 @@ export function WalletButton({ block = false }: WalletButtonProps) {
             </button>
           );
         }
+        if (requiredChain && chain.id !== requiredChain.id) {
+          return (
+            <button type="button" className={sizeClass} onClick={() => switchChain({ chainId: requiredChain.id })}>
+              Switch to {requiredChain.name}
+            </button>
+          );
+        }
         if (chain.unsupported) {
           return (
             <button type="button" className={sizeClass} onClick={openChainModal}>
-              Switch to Base Sepolia
+              Switch network
             </button>
           );
         }

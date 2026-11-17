@@ -1,5 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { formatAmount, formatMs, formatPercent, formatSeconds, parseAmount, shortHex } from "./format";
+import {
+  formatAmount,
+  formatCompact,
+  formatMs,
+  formatPercent,
+  formatSeconds,
+  formatWholeSeconds,
+  parseAmount,
+  shortHex,
+} from "./format";
 
 describe("formatAmount", () => {
   test("groups thousands and keeps the requested decimals", () => {
@@ -64,5 +73,22 @@ describe("formatSeconds", () => {
   test("shows milliseconds as seconds with one decimal", () => {
     expect(formatSeconds(1800)).toBe("1.8 seconds");
     expect(formatSeconds(1000)).toBe("1.0 seconds");
+  });
+});
+
+describe("formatWholeSeconds", () => {
+  test("names whole seconds in plain words", () => {
+    expect(formatWholeSeconds(0)).toBe("under 1 second");
+    expect(formatWholeSeconds(1)).toBe("1 second");
+    expect(formatWholeSeconds(4)).toBe("4 seconds");
+    expect(formatWholeSeconds(1200)).toBe("1,200 seconds");
+  });
+});
+
+describe("formatCompact", () => {
+  test("drops trailing zeros and a bare decimal point", () => {
+    expect(formatCompact(10n ** 15n, 18, 6)).toBe("0.001");
+    expect(formatCompact(10n ** 6n, 6, 2)).toBe("1");
+    expect(formatCompact(1_234_500_000n, 6, 2)).toBe("1,234.5");
   });
 });
