@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GITHUB_URL } from "@/config/contracts";
 import { ChainMark } from "./ChainMark";
+import { NervoMark } from "./NervoMark";
 import { WalletButton } from "./WalletButton";
 
 const NAV_LINKS = [
@@ -27,6 +28,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="bar">
         <Link href="/" className="wordmark">
+          <NervoMark />
           Nervo
         </Link>
         <nav className="site-nav" aria-label="Main">
