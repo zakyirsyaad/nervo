@@ -68,7 +68,7 @@ export function OrderFaucetRow({ wallet, isDeployed }: OrderFaucetRowProps) {
 
   return (
     <div className={`panel-row ${tradeStyles.faucet}`}>
-      <div className="label">[ Test tokens on Unichain ]</div>
+      <div className="label">Test tokens on Unichain</div>
       <p className="small muted">
         Need tokens to try this? Get 10,000 test USDC and 5 test WETH on Unichain Sepolia for free, once a day. They are
         separate from the Base Sepolia test tokens and have no real value. You also need a little Unichain Sepolia ETH

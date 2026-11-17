@@ -5,7 +5,7 @@ import { WalletButton } from "@/components/WalletButton";
 import { orderChain } from "@/config/chains";
 import { DEFAULT_ORDER_FEE_WEI, MAX_WATCHED_PER_OWNER, ORDER_POOL_FEE_BPS } from "@/config/orders";
 import { spotPriceUsdc, type TokenSymbol } from "@/lib/amm";
-import { formatAmount, formatCompact, parseAmount } from "@/lib/format";
+import { balanceText, formatAmount, formatCompact, parseAmount } from "@/lib/format";
 import {
   defaultTriggerPrice,
   EXPIRY_CHOICES,
@@ -72,6 +72,13 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
   const minAmountOut = parseAmount(minOutShown, output.decimals);
   const lifetime = EXPIRY_CHOICES.find((choice) => choice.id === expiryId) ?? EXPIRY_CHOICES[0];
   const balance = wallet.balances?.[spec.tokenIn];
+  const balanceAside = balanceText({
+    balance,
+    decimals: input.decimals,
+    displayDecimals: input.display,
+    isConnected: Boolean(wallet.account),
+    prefix: "On Unichain:",
+  });
   const firesNow = basePrice !== undefined && Boolean(triggerPrice) && triggersImmediately(kind, triggerPrice ?? 0n, basePrice);
   const direction = spec.condition === "PriceAtOrBelow" ? "below" : "above";
   const isBusy = phase !== "idle";
@@ -132,7 +139,7 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
         <legend className="sr-only">New protective order</legend>
         <div className={`panel-head ${styles.headWrap}`}>
           <span className="label" aria-hidden="true">
-            [ New order ]
+            New order
           </span>
           <KindPicker value={kind} onChange={handleKind} />
         </div>
@@ -144,7 +151,7 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
           <OrderField
             id="order-amount"
             label={spec.tokenIn === "weth" ? "Amount to sell" : "Amount to spend"}
-            aside={`On Unichain: ${balance === undefined ? "—" : formatAmount(balance, input.decimals, input.display)}`}
+            aside={balanceAside}
             value={amountText}
             onChange={(value) => {
               setAmountText(value);

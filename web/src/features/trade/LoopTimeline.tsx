@@ -52,7 +52,7 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
   return (
     <div className="panel">
       <div className="panel-head label">
-        <span>[ What happens next ]</span>
+        <span>What happens next</span>
         <span role="status" className={hasSwap ? STATUS_TONE[status.kind] : undefined}>
           {hasSwap ? status.label : "Waiting for your swap"}
         </span>
@@ -61,6 +61,7 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
       <ol className={styles.timeline}>
         <Step
           index="1"
+          chain="base"
           state={trigger ? "done" : !hasSwap ? "pending" : status.isFinal ? "off" : "active"}
           title={trigger ? "Your swap went through" : "You swap"}
           detail="The price on the pool you picked moves away from the other pool."
@@ -69,6 +70,7 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
         />
         <Step
           index="2"
+          chain="lasna"
           state={decision ? "done" : !trigger ? "pending" : status.isFinal ? "off" : "active"}
           title={decisionTitle(decision)}
           detail={decisionDetail(decision)}
@@ -77,6 +79,7 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
         />
         <Step
           index="3"
+          chain="base"
           state={outcome ? "done" : !decision ? "pending" : isWaitingCallback ? "active" : "off"}
           title={outcome ? `The trade arrived in ${formatSeconds(outcome.latencyMs)}` : "The trade is sent back to Base"}
           detail={deliveryDetail(decision, outcome, isWaitingCallback)}
@@ -85,6 +88,7 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
         />
         <Step
           index="4"
+          chain="base"
           state={outcome ? "done" : hasSwap && status.isFinal ? "off" : "pending"}
           title={outcomeTitle(outcome)}
           detail={outcomeDetail(outcome, status.kind)}

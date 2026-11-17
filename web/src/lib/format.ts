@@ -28,6 +28,24 @@ export function parseAmount(text: string, decimals: number): bigint | null {
   return BigInt(whole || "0") * 10n ** BigInt(decimals) + BigInt(fraction.padEnd(decimals, "0") || "0");
 }
 
+export const PENDING_TEXT = { loading: "Loading…", unavailable: "Unavailable", readingBalance: "Reading balance…" } as const;
+
+interface BalanceTextInput {
+  balance: bigint | undefined;
+  decimals: number;
+  displayDecimals: number;
+  isConnected: boolean;
+  /** Words before the amount, e.g. "Balance" or "On Unichain:". */
+  prefix: string;
+}
+
+/** Balance beside a form field. Undefined until a wallet is connected, since there is no balance to show. */
+export function balanceText({ balance, decimals, displayDecimals, isConnected, prefix }: BalanceTextInput): string | undefined {
+  if (!isConnected) return undefined;
+  if (balance === undefined) return PENDING_TEXT.readingBalance;
+  return `${prefix} ${formatAmount(balance, decimals, displayDecimals)}`;
+}
+
 export function shortHex(hex: string): string {
   return `${hex.slice(0, 6)}…${hex.slice(-4)}`;
 }

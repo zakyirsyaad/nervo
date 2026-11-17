@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  balanceText,
   formatAmount,
   formatCompact,
   formatMs,
@@ -90,5 +91,21 @@ describe("formatCompact", () => {
     expect(formatCompact(10n ** 15n, 18, 6)).toBe("0.001");
     expect(formatCompact(10n ** 6n, 6, 2)).toBe("1");
     expect(formatCompact(1_234_500_000n, 6, 2)).toBe("1,234.5");
+  });
+});
+
+describe("balanceText", () => {
+  const usdc = { decimals: 6, displayDecimals: 2, prefix: "Balance" };
+
+  test("shows nothing before a wallet is connected", () => {
+    expect(balanceText({ ...usdc, balance: 5_000_000n, isConnected: false })).toBeUndefined();
+  });
+
+  test("says the balance is being read while it loads", () => {
+    expect(balanceText({ ...usdc, balance: undefined, isConnected: true })).toBe("Reading balance…");
+  });
+
+  test("formats the balance after the prefix", () => {
+    expect(balanceText({ ...usdc, balance: 1_234_567_890n, isConnected: true })).toBe("Balance 1,234.56");
   });
 });

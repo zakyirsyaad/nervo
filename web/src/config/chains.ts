@@ -28,10 +28,23 @@ const EXPLORER: Record<ChainKey, string> = {
   unichain: "https://sepolia.uniscan.xyz",
 };
 
+export const CHAIN_NAME: Record<ChainKey, string> = {
+  base: "Base Sepolia",
+  lasna: "Reactive Lasna",
+  unichain: "Unichain Sepolia",
+};
+
+const CHAIN_ID: Record<ChainKey, number> = {
+  base: originChain.id,
+  lasna: lasna.id,
+  unichain: orderChain.id,
+};
+
+/** Name plus chain id, for tables where people match it against their wallet. */
 export const CHAIN_LABEL: Record<ChainKey, string> = {
-  base: "Base Sepolia · 84532",
-  lasna: "Reactive Lasna · 5318007",
-  unichain: "Unichain Sepolia · 1301",
+  base: `${CHAIN_NAME.base} · ${CHAIN_ID.base}`,
+  lasna: `${CHAIN_NAME.lasna} · ${CHAIN_ID.lasna}`,
+  unichain: `${CHAIN_NAME.unichain} · ${CHAIN_ID.unichain}`,
 };
 
 export function txUrl(chain: ChainKey, hash: Hex | string): string {

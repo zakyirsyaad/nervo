@@ -1,4 +1,12 @@
-/* Tokens from the Arb Loop design system. Dark only. */
+/*
+ * Arb Loop tokens, and why they are what they are.
+ * Dark only: this is a trading screen, so prices and the live timeline should be the brightest things on it.
+ * Colour: greys carry the text and one blue accent marks links and the step in progress. Any other colour
+ *   on the page comes from a chain's own logo.
+ * Type: Inter for reading, with tabular figures for prices. Geist Mono only for values copied from a chain:
+ *   hashes, addresses, event names, block numbers and typed amounts.
+ * Chain logo: every step of the loop runs on a named chain, and its logo says which at a glance.
+ */
 :root {
   --bg-000: #000000;
   --bg-100: #0a0a0a;
@@ -15,8 +23,6 @@
   --ok: #7ee2a8;
   --warn: #e5a13a;
   --danger: #ff6369;
-  --base-brand: #0000ff;
-  --unichain-brand: #f50db4;
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -82,15 +88,16 @@ button:disabled {
   border-bottom: 1px solid var(--line-100);
 }
 
+/* Section padding shrinks with the screen, so a phone scrolls through content rather than empty bands. */
 .container {
   max-width: var(--page-width);
   margin: 0 auto;
-  padding: 96px var(--gutter);
+  padding: clamp(56px, 10vw, 96px) var(--gutter);
 }
 
 .container.tight {
-  padding-top: 64px;
-  padding-bottom: 48px;
+  padding-top: clamp(40px, 7vw, 64px);
+  padding-bottom: clamp(32px, 5vw, 48px);
 }
 
 .stack {
@@ -123,11 +130,9 @@ button:disabled {
 
 /* Type */
 .label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
   color: var(--ink-faint);
 }
 
@@ -233,6 +238,21 @@ button:disabled {
   border: 0;
 }
 
+/* Chain logo, at text size. Decorative: the chain is always named in the text beside it. */
+.chain-mark {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
+.chain-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Panels */
 .panel {
   background: var(--bg-100);
@@ -272,25 +292,28 @@ button:disabled {
   color: var(--ink-muted);
 }
 
+.note-title {
+  color: var(--ink);
+  font-weight: 500;
+}
+
 .notes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px 32px;
 }
 
-/* Grid of hairline-separated cells */
+/* Hairline-separated cells. A short last row stretches to the edge, so the hairline colour never shows
+   through as an empty block. */
 .cells {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1px;
   background: var(--line-100);
   border: 1px solid var(--line-100);
   border-radius: var(--radius-lg);
   overflow: hidden;
-}
-
-.cells.narrow {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .cells.flush {
@@ -299,6 +322,8 @@ button:disabled {
 }
 
 .cell {
+  flex: 1 1 200px;
+  min-width: 0;
   background: var(--bg-100);
   padding: 24px;
   display: flex;
@@ -306,8 +331,29 @@ button:disabled {
   gap: 12px;
 }
 
+.cells.narrow > .cell {
+  flex-basis: 150px;
+}
+
 .cell.plain {
   background: var(--bg-000);
+}
+
+/* Four figures read as one row or a 2 x 2 block, never 3 + 1. */
+.cells.quad > .cell {
+  flex-basis: 100%;
+}
+
+@container (min-width: 300px) {
+  .cells.quad > .cell {
+    flex-basis: 40%;
+  }
+}
+
+@container (min-width: 720px) {
+  .cells.quad > .cell {
+    flex-basis: 20%;
+  }
 }
 
 /* Buttons */
@@ -368,7 +414,10 @@ button:disabled {
   font-weight: 500;
 }
 
+/* The padding gives the 17px-tall text a 45px touch area; the negative margin keeps the layout where it was. */
 .hash {
+  padding-block: 14px;
+  margin-block: -14px;
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--ink-muted);
@@ -390,11 +439,8 @@ button:disabled {
 .table th {
   padding: 16px 24px;
   text-align: left;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--ink-faint);
   border-bottom: 1px solid var(--line-200);
   white-space: nowrap;
@@ -424,6 +470,11 @@ button:disabled {
   word-break: break-all;
 }
 
+.table-note {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line-100);
+}
+
 /* Header and footer */
 .site-header {
   border-bottom: 1px solid var(--line-100);
@@ -434,13 +485,18 @@ button:disabled {
   margin: 0 auto;
   padding: 0 var(--gutter);
   min-height: 64px;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "mark nav chain wallet";
   align-items: center;
-  gap: 12px 32px;
+  column-gap: 32px;
 }
 
 .wordmark {
+  grid-area: mark;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -448,10 +504,10 @@ button:disabled {
 }
 
 .site-nav {
+  grid-area: nav;
   display: flex;
   flex-wrap: wrap;
   gap: 0 24px;
-  flex-grow: 1;
   font-size: 14px;
   font-weight: 500;
 }
@@ -467,13 +523,50 @@ button:disabled {
 }
 
 .chain-badge {
+  grid-area: chain;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.header-wallet {
+  grid-area: wallet;
+}
+
+/* Below 860px the links stop fitting beside the network and the wallet button, so they get a row of their
+   own. GitHub drops out of that row; it stays in the footer. */
+@media (max-width: 860px) {
+  .site-header .bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "mark chain wallet"
+      "nav nav nav";
+    column-gap: 16px;
+    padding-top: 8px;
+  }
+
+  .chain-badge {
+    justify-self: end;
+  }
+
+  .site-nav {
+    gap: 0 20px;
+  }
+
+  .site-nav .nav-external {
+    display: none;
+  }
+}
+
+/* Under 420px "Unichain Sepolia" no longer fits beside the wallet button; the chain name alone does. */
+@media (max-width: 420px) {
+  .chain-badge .chain-network {
+    display: none;
+  }
 }
 
 .site-footer .bar {
@@ -504,9 +597,11 @@ button:disabled {
   color: var(--ink);
 }
 
+/* A step in progress pulses three times to catch the eye, then holds still, so nothing moves for more than
+   five seconds. */
 @media (prefers-reduced-motion: no-preference) {
   .pulse {
-    animation: pulse 1.6s ease-in-out infinite;
+    animation: pulse 1.6s ease-in-out 3;
   }
 }
 

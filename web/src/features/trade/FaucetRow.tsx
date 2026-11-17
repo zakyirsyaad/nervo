@@ -65,7 +65,7 @@ export function FaucetRow({ wallet }: FaucetRowProps) {
 
   return (
     <div className={`panel-row ${styles.faucet}`}>
-      <div className="label">[ Test tokens ]</div>
+      <div className="label">Test tokens</div>
       <p className="small muted">
         Need tokens to try this? Get 10,000 test USDC and 5 test WETH for free, once a day. They are play money with
         no real value. You also need a little Base Sepolia ETH to pay network fees.

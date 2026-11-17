@@ -8,7 +8,6 @@
 .stats {
   flex: 1 1 400px;
   min-width: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: stretch;
 }
 

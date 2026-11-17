@@ -47,17 +47,17 @@ export function OrderTracker({ order, trail, canCancel, isCancelling, cancelErro
   return (
     <div className="panel">
       <div className="panel-head label">
-        <span>[ Order tracker{order ? ` · #${order.id}` : ""} ]</span>
+        <span>Order tracker{order ? ` · #${order.id}` : ""}</span>
         <span role="status" className={isLive ? status.tone : undefined}>
           {!order ? "Waiting for an order" : isReading ? "Reading the chains…" : status.label}
         </span>
       </div>
 
       <ol className={tradeStyles.timeline}>
-        <TimelineStep index="1" state={order ? "done" : "pending"} {...(order ? placed : IDLE_TEXT.placed)} />
-        <TimelineStep index="2" state={isLive ? trail.steps.mirror : "pending"} {...(isLive ? mirror : IDLE_TEXT.mirror)} />
-        <TimelineStep index="3" state={isLive ? trail.steps.trigger : "pending"} {...(isLive ? trigger : IDLE_TEXT.trigger)} />
-        <TimelineStep index="4" state={isLive ? trail.steps.outcome : "pending"} {...(isLive ? outcome : IDLE_TEXT.outcome)} />
+        <TimelineStep index="1" state={order ? "done" : "pending"} {...(order ? placed : IDLE_TEXT.placed)} chain="unichain" />
+        <TimelineStep index="2" state={isLive ? trail.steps.mirror : "pending"} {...(isLive ? mirror : IDLE_TEXT.mirror)} chain="lasna" />
+        <TimelineStep index="3" state={isLive ? trail.steps.trigger : "pending"} {...(isLive ? trigger : IDLE_TEXT.trigger)} chain="base" />
+        <TimelineStep index="4" state={isLive ? trail.steps.outcome : "pending"} {...(isLive ? outcome : IDLE_TEXT.outcome)} chain="unichain" />
       </ol>
 
       {isLive ? (

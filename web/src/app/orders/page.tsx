@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import { ContractTable } from "@/components/ContractTable";
-import { ORDER_CONTRACTS } from "@/config/orders";
+import { ORDER_CONTRACTS, ORDER_STACK } from "@/config/orders";
 import { OrdersWorkspace } from "@/features/orders/OrdersWorkspace";
 
 export const metadata: Metadata = { title: "Protect" };
+
+// Shown only while the two really share an address, so a redeploy at other nonces drops it by itself.
+const SHARED_ADDRESS_NOTE =
+  ORDER_STACK.orderReactive.toLowerCase() === ORDER_STACK.faucet.toLowerCase()
+    ? "OrderReactive and the faucet share an address on purpose. A contract's address comes from the deployer and how many transactions it has sent, and both were deployed at the same count, on two different chains."
+    : undefined;
 
 export default function OrdersPage() {
   return (
     <>
       <section className="section">
         <div className="container tight stack">
-          <div className="label">[ Protect ]</div>
           <h1 className="h1">A stop-loss that watches another chain.</h1>
           <p className="body-lg">
             Set a stop-loss on Unichain Sepolia that reacts to the price on Base Sepolia. When the price gets there, a
@@ -24,14 +29,13 @@ export default function OrdersPage() {
       <section className="section">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ Check it yourself ]</div>
             <h2 className="h2">The contracts behind it.</h2>
             <p className="muted">
               The order book holds your tokens on Unichain Sepolia. The Reactive contract on Lasna reads the price on
               Base Sepolia and tells the order book when to trade.
             </p>
           </div>
-          <ContractTable rows={ORDER_CONTRACTS} />
+          <ContractTable rows={ORDER_CONTRACTS} note={SHARED_ADDRESS_NOTE} />
         </div>
       </section>
     </>

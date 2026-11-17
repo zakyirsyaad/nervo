@@ -1,8 +1,9 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ORDER_STACK } from "@/config/orders";
+import { revealIfOffscreen } from "@/lib/reveal";
 import { OrderForm } from "./OrderForm";
 import { canCancel, type OrderRef } from "./orderList";
 import { OrdersPanel } from "./OrdersPanel";
@@ -24,6 +25,7 @@ export function OrdersWorkspace() {
   const myOrders = useMyOrders(wallet.account, contracts.isDeployed);
   const cancel = useCancelOrder();
   const [selectedId, setSelectedId] = useState<bigint>();
+  const trackerRef = useRef<HTMLDivElement>(null);
 
   // Follows the order picked in the list, or the newest one.
   const refs = myOrders.refs ?? [];
@@ -31,9 +33,18 @@ export function OrdersWorkspace() {
   const trail = useOrderTrail(selected);
   const selectedView = trail.snapshot?.order ?? myOrders.orders?.find((view) => view.ref.id === selected?.id);
 
+  // Set only by a new order, so picking an existing order from the list does not scroll the page.
+  const [placedId, setPlacedId] = useState<bigint>();
+
+  // After the commit, so the tracker is measured below the order row the new order adds above it.
+  useEffect(() => {
+    if (placedId !== undefined) revealIfOffscreen(trackerRef.current);
+  }, [placedId]);
+
   function handlePlaced(order: OrderRef) {
     myOrders.remember(order);
     setSelectedId(order.id);
+    setPlacedId(order.id);
   }
 
   async function handleCancel(orderId: bigint) {
@@ -67,14 +78,16 @@ export function OrdersWorkspace() {
           cancel={cancel}
           onCancel={(orderId) => void handleCancel(orderId)}
         />
-        <OrderTracker
-          order={selected}
-          trail={trail}
-          canCancel={selectedView ? canCancel(selectedView, wallet.account) : false}
-          isCancelling={selected !== undefined && cancel.cancellingId === selected.id}
-          cancelError={selected !== undefined && cancel.error?.orderId === selected.id ? cancel.error.message : undefined}
-          onCancel={() => selected && void handleCancel(selected.id)}
-        />
+        <div ref={trackerRef} className={tradeStyles.reveal}>
+          <OrderTracker
+            order={selected}
+            trail={trail}
+            canCancel={selectedView ? canCancel(selectedView, wallet.account) : false}
+            isCancelling={selected !== undefined && cancel.cancellingId === selected.id}
+            cancelError={selected !== undefined && cancel.error?.orderId === selected.id ? cancel.error.message : undefined}
+            onCancel={() => selected && void handleCancel(selected.id)}
+          />
+        </div>
       </div>
     </div>
   );

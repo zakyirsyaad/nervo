@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ChainMark } from "@/components/ChainMark";
 import { CompareTable } from "@/components/CompareTable";
 import { ContractTable } from "@/components/ContractTable";
 import { HashLink } from "@/components/HashLink";
+import { CHAIN_NAME, type ChainKey } from "@/config/chains";
 import { MAIN_STACK } from "@/config/contracts";
 import {
   CALLBACK_TIMEOUTS,
@@ -19,30 +21,18 @@ const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
 const P95_MS = percentile(LATENCIES_MS, 95) ?? 0;
 const SAMPLE = LATENCY_SAMPLES[0];
 
-const LOOP_STEPS = [
-  {
-    label: "Step 1 · Base Sepolia",
-    title: "Someone swaps",
-    body: "Two pools sell the same token. A swap on one of them moves its price, so the two pools no longer agree.",
-    code: "ConstantProductPool.swap",
-  },
-  {
-    label: "Step 2 · Reactive",
-    title: "A contract notices",
-    body: "A contract on the Reactive network is listening. It works out whether buying on the cheaper pool and selling on the other would make at least 2 USDC.",
-    code: "ArbReactive.react",
-  },
-  {
-    label: "Step 3 · Base Sepolia",
-    title: "The trade happens by itself",
-    body: "If it is worth it, the contract sends the trade back. A second contract checks the prices one more time, then buys low and sells high in one go.",
-    code: "ArbExecutor.executeArb",
-  },
-] as const;
+interface Decision {
+  readonly chain: ChainKey;
+  readonly label: string;
+  readonly title: string;
+  readonly body: string;
+  readonly events: readonly { readonly name: string; readonly meaning: string }[];
+}
 
-const DECISIONS = [
+const DECISIONS: readonly Decision[] = [
   {
-    label: "First check · on Reactive",
+    chain: "lasna",
+    label: "First check",
     title: "Is it worth trading?",
     body: "If the difference is too small to cover fees, it stops here and nothing is sent. That keeps costs down.",
     events: [
@@ -52,7 +42,8 @@ const DECISIONS = [
     ],
   },
   {
-    label: "Second check · on Base Sepolia",
+    chain: "base",
+    label: "Second check",
     title: "Is it still worth it now?",
     body: "Prices can change in the second or two the trade takes to arrive. So the trade is checked again against the latest prices before any money moves.",
     events: [
@@ -60,7 +51,7 @@ const DECISIONS = [
       { name: "SkippedMarginGone", meaning: "Too late, safely cancelled" },
     ],
   },
-] as const;
+];
 
 function formatSeconds(ms: number): string {
   return (ms / 1000).toFixed(1);
@@ -79,7 +70,6 @@ export default function HomePage() {
       <section className="section">
         <div className={`container ${styles.hero}`}>
           <div className={`stack loose ${styles.heroCopy}`}>
-            <div className="label">[ Automatic arbitrage across two chains ]</div>
             <h1 className="display">Spots a price gap and trades it in {formatSeconds(P50_MS)} seconds.</h1>
             <p className="body-lg">
               When two pools show different prices for the same token, there is a profit in buying on the cheaper one
@@ -100,15 +90,37 @@ export default function HomePage() {
           </div>
 
           <div className={`panel ${styles.heroPanel}`}>
-            <div className="panel-head">
-              <span className="label">[ A real example ]</span>
-              <span className="label ok">Trade done</span>
+            <div className="panel-head label">
+              <span>One real run, step by step</span>
+              <span className="ok">Trade done</span>
             </div>
-            <MeasuredStep label="1 · Base Sepolia" block={SAMPLE.originBlock} title="Someone swapped on Pool B" chain="base" hash={SAMPLE.originTx} />
-            <MeasuredStep label="2 · Reactive" block={SAMPLE.lasnaBlock} title="The contract said: worth trading" chain="lasna" hash={SAMPLE.lasnaTx} />
-            <MeasuredStep label="3 · Base Sepolia" block={SAMPLE.callbackBlock} title="The trade was made" chain="base" hash={SAMPLE.callbackTx} isActive />
+            <MeasuredStep
+              index={1}
+              chain="base"
+              block={SAMPLE.originBlock}
+              title="Someone swapped on Pool B"
+              code="ConstantProductPool.swap"
+              hash={SAMPLE.originTx}
+            />
+            <MeasuredStep
+              index={2}
+              chain="lasna"
+              block={SAMPLE.lasnaBlock}
+              title="The contract said: worth trading"
+              code="ArbReactive.react"
+              hash={SAMPLE.lasnaTx}
+            />
+            <MeasuredStep
+              index={3}
+              chain="base"
+              block={SAMPLE.callbackBlock}
+              title="The trade was made"
+              code="ArbExecutor.executeArb"
+              hash={SAMPLE.callbackTx}
+              isActive
+            />
             <div className={`panel-row ${styles.total}`}>
-              <span className="small muted">From swap to trade</span>
+              <span className="small muted">This run, swap to trade</span>
               <span className="metric">
                 {formatSeconds(SAMPLE.latencyMs)} <span className="unit">seconds</span>
               </span>
@@ -118,10 +130,10 @@ export default function HomePage() {
       </section>
 
       <section className="section" aria-label="Key figures">
-        <div className={`cells flush ${styles.metrics}`}>
+        <div className={`cells flush quad ${styles.metrics}`}>
           {metrics.map((metric) => (
             <div key={metric.label} className="cell plain">
-              <div className="label">[ {metric.label} ]</div>
+              <div className="label">{metric.label}</div>
               <div className="metric">
                 {metric.value} <span className="unit">{metric.unit}</span>
               </div>
@@ -134,59 +146,20 @@ export default function HomePage() {
       <section className="section">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ How it works ]</div>
-            <h2 className="h2">Three steps, and nobody presses a button.</h2>
-            <p className="body-lg">
-              Normally a trading bot runs on someone&apos;s server and watches prices all day. Here the watching and
-              the deciding are done by a contract on the Reactive network.
-            </p>
-          </div>
-          <ol className={styles.loop}>
-            {LOOP_STEPS.map((step) => (
-              <li key={step.label} className={`panel ${styles.loopCard}`}>
-                <div className="label">[ {step.label} ]</div>
-                <h3 className="h3">{step.title}</h3>
-                <p className="muted">{step.body}</p>
-                <code className="mono faint">{step.code}</code>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="section" aria-label="Protective orders">
-        <div className="container tight">
-          <div className={`panel ${styles.protect}`}>
-            <div className="stack">
-              <div className="label">[ Same loop, another use ]</div>
-              <h2 className="h3">Use the same loop to protect a position.</h2>
-              <p className="muted">
-                Set a stop-loss on Unichain Sepolia that reacts to the price on Base Sepolia and fills by itself within
-                seconds.
-              </p>
-            </div>
-            <Link href="/orders" className="btn">
-              Set a protective order
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container stack loose">
-          <div className="stack">
-            <div className="label">[ Two safety checks ]</div>
             <h2 className="h2">It checks twice before any money moves.</h2>
             <p className="body-lg">
-              Each check leaves a public record saying what was decided and why. The names on the right are those
-              records, exactly as they appear on the blockchain.
+              Each check leaves a public record saying what was decided and why. Names like CallbackRequested are
+              those records, exactly as they appear on the blockchain.
             </p>
           </div>
           <div className={styles.decisions}>
             {DECISIONS.map((decision) => (
               <div key={decision.label} className="panel">
                 <div className={`panel-row stack ${styles.decisionHead}`}>
-                  <div className="label">[ {decision.label} ]</div>
+                  <div className="label chain-tag">
+                    <ChainMark chain={decision.chain} />
+                    {decision.label} · on {CHAIN_NAME[decision.chain]}
+                  </div>
                   <h3 className="h3">{decision.title}</h3>
                   <p className="muted">{decision.body}</p>
                 </div>
@@ -206,8 +179,8 @@ export default function HomePage() {
       <section className="section">
         <div className="container split">
           <div className="lead stack">
-            <div className="label">[ Does checking first help? ]</div>
-            <h2 className="h2">Same profit, far fewer wasted trades.</h2>
+            <div className="label">Does checking first help?</div>
+            <h2 className="h2">Same trades, far fewer wasted ones.</h2>
             <p className="muted">
               We built a second copy that skips the first check and sends every possible trade, then ran the same 12
               price changes through both.
@@ -226,12 +199,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="section" aria-label="Protective orders">
+        <div className="container tight">
+          <div className={`panel ${styles.protect}`}>
+            <div className="stack">
+              <h2 className="h3">Use the same loop to protect a position.</h2>
+              <p className="muted">
+                Set a stop-loss on Unichain Sepolia that reacts to the price on Base Sepolia and fills by itself within
+                seconds.
+              </p>
+            </div>
+            <Link href="/orders" className="btn">
+              Set a protective order
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="section" id="contracts">
         <div className="container stack loose">
-          <div className="stack">
-            <div className="label">[ Check it yourself ]</div>
-            <h2 className="h2">Everything is public on the test networks.</h2>
-          </div>
+          <h2 className="h2">Everything is public on the test networks.</h2>
           <ContractTable rows={MAIN_STACK} />
         </div>
       </section>
@@ -240,25 +227,31 @@ export default function HomePage() {
 }
 
 interface MeasuredStepProps {
-  label: string;
+  index: number;
+  chain: ChainKey;
   block: number;
   title: string;
-  chain: "base" | "lasna";
+  /** Contract function that ran in this step. */
+  code: string;
   hash: string;
   isActive?: boolean;
 }
 
-function MeasuredStep({ label, block, title, chain, hash, isActive = false }: MeasuredStepProps) {
+function MeasuredStep({ index, chain, block, title, code, hash, isActive = false }: MeasuredStepProps) {
   return (
     <div className={`panel-row stack ${styles.step} ${isActive ? "active" : ""}`}>
       <div className={`label ${styles.stepMeta} ${isActive ? "accent" : ""}`}>
-        <span>{label}</span>
-        <span>Block {block}</span>
+        <span className="chain-tag">
+          <ChainMark chain={chain} />
+          {index} · {CHAIN_NAME[chain]}
+        </span>
+        <span className="mono num">Block {block}</span>
       </div>
       <div className={styles.stepBody}>
         <span>{title}</span>
         <HashLink chain={chain} hash={hash} />
       </div>
+      <code className="mono faint">{code}</code>
     </div>
   );
 }

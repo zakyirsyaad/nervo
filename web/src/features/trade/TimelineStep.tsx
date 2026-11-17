@@ -1,3 +1,4 @@
+import { ChainMark } from "@/components/ChainMark";
 import { HashLink } from "@/components/HashLink";
 import type { ChainKey } from "@/config/chains";
 import styles from "./trade.module.css";
@@ -15,6 +16,8 @@ const STEP_STATE_TEXT: Record<StepState, string> = {
 interface TimelineStepProps {
   index: string;
   state: StepState;
+  /** Chain the step runs on, shown as its mark even before the step happens. */
+  chain: ChainKey;
   title: string;
   /** One plain sentence about the step. */
   detail: string;
@@ -24,10 +27,11 @@ interface TimelineStepProps {
 }
 
 /** One row of a cross-chain timeline, shared by the swap tracker and the order tracker. */
-export function TimelineStep({ index, state, title, detail, tech, link }: TimelineStepProps) {
+export function TimelineStep({ index, state, chain, title, detail, tech, link }: TimelineStepProps) {
   return (
     <li className={`${styles.stepRow} ${styles[state]}`} aria-current={state === "active" ? "step" : undefined}>
       <span className={`mono ${styles.stepIndex}`}>
+        <ChainMark chain={chain} />
         {index}{" "}
         <span aria-hidden="true" className={state === "active" ? "pulse" : undefined}>
           {STEP_MARK[state]}

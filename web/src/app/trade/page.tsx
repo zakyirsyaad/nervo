@@ -8,7 +8,6 @@ export default function TradePage() {
     <>
       <section className="section">
         <div className="container tight stack">
-          <div className="label">[ Trade ]</div>
           <h1 className="h1">Try it yourself.</h1>
           <p className="body-lg">
             Swap on one pool and its price moves away from the other. Within about two seconds, a contract on another
