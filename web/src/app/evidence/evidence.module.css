@@ -1,0 +1,50 @@
+.latency {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.stats {
+  flex: 1 1 400px;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+}
+
+.chartPanel {
+  flex: 1 1 400px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 220px;
+  padding: 24px;
+}
+
+.barColumn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 8px;
+}
+
+.bar {
+  align-self: end;
+  width: 100%;
+  min-height: 2px;
+  background: var(--line-300);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.median {
+  background: var(--accent);
+}

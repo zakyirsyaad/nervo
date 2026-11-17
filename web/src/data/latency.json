@@ -1,0 +1,128 @@
+{
+ "source": "evidence/latency-2026-11-16.json",
+ "samples": [
+  {
+   "originTx": "0x5be4c13e8e82050dabd132dcd60fd3e75b2803c409958a87f03175eacf0a3a46",
+   "lasnaTx": "0x695e4bf7030e53b168592b7c5c9ab8bee2058fee28e6846d8ef4fce30e9a3a15",
+   "callbackTx": "0xe34f0e6d3be968c3a320f8fe64be21c96251c5c3519d6f5bd60ce1756375be88",
+   "originBlock": 59089529,
+   "lasnaBlock": 8402587,
+   "callbackBlock": 59089538,
+   "outcome": "Executed",
+   "latencyMs": 1800
+  },
+  {
+   "originTx": "0x4db64309a8f23a16dca81249f51a9cea6b8cb90a80c3c7160d5cb2fcf9c76290",
+   "lasnaTx": "0x6b8ff7ea2a81af09dd6f8eaad8c1a29aa9a1f23afe9130a5a9ddc701a7efde97",
+   "callbackTx": "0xc0806ffd315879e0351d8c8395155ab746c4fbd765fef4d8d121d8db7ff3642b",
+   "originBlock": 59090298,
+   "lasnaBlock": 8402733,
+   "callbackBlock": 59090304,
+   "outcome": "SkippedMarginGone",
+   "latencyMs": 1200
+  },
+  {
+   "originTx": "0xf66c6f708d81d58a513cc4a5369704da060b0ec1603eef906f615d7f29921c42",
+   "lasnaTx": "0x8fd9c440d88ab200209345dc85a35bcee6ac01c8e0ea6ded870df4b55f45168b",
+   "callbackTx": "0x77c8ffb5ca590a8be50283ded281caf1a0902bf7cf8fc64c2315983a58131e65",
+   "originBlock": 59352797,
+   "lasnaBlock": 8452185,
+   "callbackBlock": 59352804,
+   "outcome": "Executed",
+   "latencyMs": 1400
+  },
+  {
+   "originTx": "0x2e9955cf158cc6b28e8d7d0c098aaae096f1d36a598e2588fd6fc79af8a81e46",
+   "lasnaTx": "0xc61490b5c93866467a048cde27816df0527505b36f3efce55ef51d81451958cb",
+   "callbackTx": "0xc83b7afac01ac0ae1ba73c7679d5e5ee59ddd2e3696de9c29bb3bbb115d1ab96",
+   "originBlock": 59352886,
+   "lasnaBlock": 8452202,
+   "callbackBlock": 59352895,
+   "outcome": "Executed",
+   "latencyMs": 1800
+  },
+  {
+   "originTx": "0x7661d7fe378938f7565bac35851c377ec9c25dbc60107e2134060f1cbaf59e4c",
+   "lasnaTx": "0x1111c1f89f2396686d53c08a0fe5cfa4cc69df75f1dc38c7acb829002eca243d",
+   "callbackTx": "0xb231cf5e6b32e9cc1cdb43f738fd334a3ebc35c8cde8e9258baa02a38c02de33",
+   "originBlock": 59352975,
+   "lasnaBlock": 8452219,
+   "callbackBlock": 59352983,
+   "outcome": "Executed",
+   "latencyMs": 1600
+  },
+  {
+   "originTx": "0x1ed2b304c441cd4ddc9c1a83bbff0a7e6654827794f65118b527adde2b6d2986",
+   "lasnaTx": "0x2c7d14e7fe735b5e8293469dbe140c3c6eb0b2602ebffcbb4e74a6c370635597",
+   "callbackTx": "0x7c394ca60072380c51699530a662aebf26756ded5be45c5721aa26aa528d3ec2",
+   "originBlock": 59353063,
+   "lasnaBlock": 8452235,
+   "callbackBlock": 59353068,
+   "outcome": "Executed",
+   "latencyMs": 1000
+  },
+  {
+   "originTx": "0xa5990c15043aaaa71f682cb76f398efe7d513540be90e0d40f2a9e230589606e",
+   "lasnaTx": "0x9f4fe102f7989deec909a0d19fd78fd8ffc01da5870ce8b4d49ca608a6297403",
+   "callbackTx": "0x12b8cf22da1b43abe85b441b81ad9c03c4a5d0bc7fd2456913b5de7e473b67b9",
+   "originBlock": 59353156,
+   "lasnaBlock": 8452253,
+   "callbackBlock": 59353163,
+   "outcome": "Executed",
+   "latencyMs": 1400
+  },
+  {
+   "originTx": "0x459f1197631289714a8b133e1c85d9c3d4c8fa4e6ad36d5e3115691bba84f701",
+   "lasnaTx": "0xcbacc9c4bf10082bc164eb71713aff834cad4e618b9625f85746adee06d2d97e",
+   "callbackTx": "0x2f367ca503ef5e23b1c7a0664ca45d78c95e9c70131a0a49676e2d94c1411726",
+   "originBlock": 59353242,
+   "lasnaBlock": 8452269,
+   "callbackBlock": 59353247,
+   "outcome": "Executed",
+   "latencyMs": 1000
+  },
+  {
+   "originTx": "0x17ab23074f5711c875f5d0b1b2470620ee6f64a2b1bb24e6ee64341f64aadde5",
+   "lasnaTx": "0xdd0698000965e9cddeea632183028d5c1c9392ecad76ad87a35dc216cdaa15dd",
+   "callbackTx": "0x4b3b1608eba0024cccbb3109c7df8be04b8ccc4f09055c27263b00b6fc8f4a23",
+   "originBlock": 59353330,
+   "lasnaBlock": 8452286,
+   "callbackBlock": 59353336,
+   "outcome": "Executed",
+   "latencyMs": 1200
+  },
+  {
+   "originTx": "0xf0dbd2d29b67f04e6c09110956680a9152a7426eb8b93f001c72d34f733bb058",
+   "lasnaTx": "0xe6582364b2e785e5aac30a883827ede1c298524bcc82c56d8c8add722b1d1d69",
+   "callbackTx": "0x09698dfbabc7f37107f867820308a962dd8e32d8fe55aaa08f5d8168ec07b270",
+   "originBlock": 59353419,
+   "lasnaBlock": 8452303,
+   "callbackBlock": 59353426,
+   "outcome": "Executed",
+   "latencyMs": 1400
+  },
+  {
+   "originTx": "0x9753cb14d91823538851ae89ef4358bfa7bea1cf55dd296d83be6e07809d9c73",
+   "lasnaTx": "0x8fa2768ab5d824cb9595de01b0809f7619da031d6af193aef2f94654908194a6",
+   "callbackTx": "0x075224ffd76fabf8999833a6600163f2c95501e1e100a24df6539b908ac5e702",
+   "originBlock": 59353506,
+   "lasnaBlock": 8452320,
+   "callbackBlock": 59353516,
+   "outcome": "Executed",
+   "latencyMs": 2000
+  },
+  {
+   "originTx": "0x3a069a0853d5bf970cf8969ee5e2d2391d5c6ef14c4e2c935d8f050515a7204a",
+   "lasnaTx": "0x84917148ffc14992057e34e0817958c3ba800e378225455c5bfe1143cca8b950",
+   "callbackTx": "0x8ef3e66bbf19963d1a69e7e10861bda4bde4a8bfffeb52dc2dfaccc34fc4f5e4",
+   "originBlock": 59353596,
+   "lasnaBlock": 8452337,
+   "callbackBlock": 59353605,
+   "outcome": "Executed",
+   "latencyMs": 1800
+  }
+ ],
+ "requested": 12,
+ "arrived": 12,
+ "timeouts": 0
+}

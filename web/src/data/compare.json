@@ -1,0 +1,24 @@
+{
+ "source": "evidence/compare-2026-11-16.json",
+ "steps": 12,
+ "filtered": {
+  "logs": 18,
+  "callbacks": 3,
+  "executed": 3,
+  "wasted": 0,
+  "ethSpent": 4.934286070291e-06,
+  "lreactSpent": 0.2933835,
+  "p50Ms": 1800,
+  "p95Ms": 2000
+ },
+ "unfiltered": {
+  "logs": 18,
+  "callbacks": 12,
+  "executed": 3,
+  "wasted": 9,
+  "ethSpent": 1.1293431924485e-05,
+  "lreactSpent": 0.3074397,
+  "p50Ms": 1600,
+  "p95Ms": 2000
+ }
+}

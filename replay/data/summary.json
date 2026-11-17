@@ -1,0 +1,260 @@
+{
+ "titik_evaluasi": 127460,
+ "jam": 72.0,
+ "harga_awal": 2017.57,
+ "harga_akhir": 1926.85,
+ "ringkasan": [
+  {
+   "input_usdc": 1000.0,
+   "ambang_usdc": 0.01,
+   "titik_kandidat": 698,
+   "episode": 579,
+   "layak_1s": 6,
+   "layak_1s_pct": 1.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 6,
+   "layak_5s_pct": 1.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 200,
+   "surplus_sinyal_p50_usdc": 0.966,
+   "total_surplus_sinyal_usdc": 636.17
+  },
+  {
+   "input_usdc": 1000.0,
+   "ambang_usdc": 0.1,
+   "titik_kandidat": 618,
+   "episode": 538,
+   "layak_1s": 2,
+   "layak_1s_pct": 0.4,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 4,
+   "layak_5s_pct": 0.7,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 1.04,
+   "total_surplus_sinyal_usdc": 636.78
+  },
+  {
+   "input_usdc": 1000.0,
+   "ambang_usdc": 0.5,
+   "titik_kandidat": 456,
+   "episode": 435,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 1.275,
+   "total_surplus_sinyal_usdc": 609.58
+  },
+  {
+   "input_usdc": 1000.0,
+   "ambang_usdc": 2.0,
+   "titik_kandidat": 59,
+   "episode": 58,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 2.292,
+   "total_surplus_sinyal_usdc": 150.0
+  },
+  {
+   "input_usdc": 10000.0,
+   "ambang_usdc": 0.01,
+   "titik_kandidat": 6,
+   "episode": 6,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 1.259,
+   "total_surplus_sinyal_usdc": 41.57
+  },
+  {
+   "input_usdc": 10000.0,
+   "ambang_usdc": 0.1,
+   "titik_kandidat": 5,
+   "episode": 5,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 1.259,
+   "total_surplus_sinyal_usdc": 41.49
+  },
+  {
+   "input_usdc": 10000.0,
+   "ambang_usdc": 0.5,
+   "titik_kandidat": 5,
+   "episode": 5,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 1.259,
+   "total_surplus_sinyal_usdc": 41.49
+  },
+  {
+   "input_usdc": 10000.0,
+   "ambang_usdc": 2.0,
+   "titik_kandidat": 2,
+   "episode": 2,
+   "layak_1s": 0,
+   "layak_1s_pct": 0.0,
+   "layak_2s": 0,
+   "layak_2s_pct": 0.0,
+   "layak_5s": 0,
+   "layak_5s_pct": 0.0,
+   "durasi_p50_ms": 0,
+   "durasi_p95_ms": 0,
+   "surplus_sinyal_p50_usdc": 31.481,
+   "total_surplus_sinyal_usdc": 39.03
+  }
+ ],
+ "durasi": {
+  "1000@0.01": {
+   "blok_sama": 538,
+   "satu_blok_200ms": 24,
+   "sampai_1s": 17,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "1000@0.1": {
+   "blok_sama": 514,
+   "satu_blok_200ms": 14,
+   "sampai_1s": 10,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "1000@0.5": {
+   "blok_sama": 430,
+   "satu_blok_200ms": 4,
+   "sampai_1s": 1,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "1000@2.0": {
+   "blok_sama": 57,
+   "satu_blok_200ms": 1,
+   "sampai_1s": 0,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "10000@0.01": {
+   "blok_sama": 6,
+   "satu_blok_200ms": 0,
+   "sampai_1s": 0,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "10000@0.1": {
+   "blok_sama": 5,
+   "satu_blok_200ms": 0,
+   "sampai_1s": 0,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "10000@0.5": {
+   "blok_sama": 5,
+   "satu_blok_200ms": 0,
+   "sampai_1s": 0,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  },
+  "10000@2.0": {
+   "blok_sama": 2,
+   "satu_blok_200ms": 0,
+   "sampai_1s": 0,
+   "sampai_5s": 0,
+   "lebih_5s": 0
+  }
+ },
+ "akhir_blok": {
+  "1000@0.01": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 49,
+   "surplus_maks_usdc": 2.537
+  },
+  "1000@0.1": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 31,
+   "surplus_maks_usdc": 2.537
+  },
+  "1000@0.5": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 5,
+   "surplus_maks_usdc": 2.537
+  },
+  "1000@2.0": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 1,
+   "surplus_maks_usdc": 2.537
+  },
+  "10000@0.01": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 0,
+   "surplus_maks_usdc": -12.514
+  },
+  "10000@0.1": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 0,
+   "surplus_maks_usdc": -12.514
+  },
+  "10000@0.5": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 0,
+   "surplus_maks_usdc": -12.514
+  },
+  "10000@2.0": {
+   "blok_dengan_swap": 101877,
+   "gap_bps_p50": 2.16,
+   "gap_bps_p99": 7.17,
+   "gap_bps_maks": 41.37,
+   "akhir_blok_layak": 0,
+   "surplus_maks_usdc": -12.514
+  }
+ }
+}

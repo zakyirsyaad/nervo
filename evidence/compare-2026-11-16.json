@@ -1,0 +1,67 @@
+{
+ "rentang_blok": {
+  "awal": {
+   "base": 59379151,
+   "lasna": 8457150
+  },
+  "akhir": {
+   "base": 59380602,
+   "lasna": 8457424
+  }
+ },
+ "selisih_bps": [
+  50,
+  100,
+  130,
+  200
+ ],
+ "langkah": 12,
+ "berfilter": {
+  "log_diproses": 18,
+  "keputusan": {
+   "MarginBelowThreshold": 9,
+   "CallbackRequested": 3,
+   "ExecutorSwap": 6
+  },
+  "outcome": {
+   "Executed": 3
+  },
+  "callback_diminta": 3,
+  "callback_terbuang": 0,
+  "terpakai": {
+   "lreact": 0.2933835,
+   "eth_executor": 4.934286070291e-06
+  },
+  "lreact_per_eksekusi": 0.0977945,
+  "latensi": {
+   "callback_tiba": 3,
+   "timeout": 0,
+   "p50_ms": 1800,
+   "p95_ms": 2000
+  }
+ },
+ "tanpa_filter": {
+  "log_diproses": 18,
+  "keputusan": {
+   "CallbackRequested": 12,
+   "ExecutorSwap": 6
+  },
+  "outcome": {
+   "SkippedMarginGone": 9,
+   "Executed": 3
+  },
+  "callback_diminta": 12,
+  "callback_terbuang": 9,
+  "terpakai": {
+   "lreact": 0.3074397,
+   "eth_executor": 1.1293431924485e-05
+  },
+  "lreact_per_eksekusi": 0.1024799,
+  "latensi": {
+   "callback_tiba": 12,
+   "timeout": 0,
+   "p50_ms": 1600,
+   "p95_ms": 2000
+  }
+ }
+}

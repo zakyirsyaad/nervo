@@ -1,0 +1,268 @@
+import type { Metadata } from "next";
+import { CompareTable } from "@/components/CompareTable";
+import { ContractTable } from "@/components/ContractTable";
+import { HashLink } from "@/components/HashLink";
+import { COMPARISON_STACK, GITHUB_URL } from "@/config/contracts";
+import {
+  BLOCK_INTERVAL_MS,
+  CALLBACK_TIMEOUTS,
+  CALLBACKS_ARRIVED,
+  CALLBACKS_REQUESTED,
+  ETH_SAVED_PERCENT,
+  FILTERED,
+  LATENCIES_MS,
+  LATENCY_SAMPLES,
+  REPLAY,
+  SCENARIOS,
+  UNFILTERED,
+} from "@/data/evidence";
+import { formatSeconds } from "@/lib/format";
+import { histogram, percentile } from "@/lib/latency";
+import styles from "./evidence.module.css";
+
+export const metadata: Metadata = { title: "Evidence" };
+
+const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
+const BUCKETS = histogram(LATENCIES_MS, BLOCK_INTERVAL_MS);
+const MAX_COUNT = Math.max(...BUCKETS.map((bucket) => bucket.count), 1);
+const EXECUTED_COUNT = LATENCY_SAMPLES.filter((sample) => sample.outcome === "Executed").length;
+const LREACT_DIFF_PERCENT = Math.round((UNFILTERED.lreactSpent / FILTERED.lreactSpent - 1) * 100);
+
+const LATENCY_STATS = [
+  { label: "Typical", value: P50_MS },
+  { label: "Slow end", value: percentile(LATENCIES_MS, 95) ?? 0 },
+  { label: "Fastest", value: Math.min(...LATENCIES_MS) },
+  { label: "Slowest", value: Math.max(...LATENCIES_MS) },
+];
+
+const REPLAY_CELLS = [
+  { label: "Price gaps in 3 days", value: REPLAY.episodes },
+  { label: "Closed instantly by others", value: REPLAY.closedSameBlock },
+  ...REPLAY.viableAfter.map((entry) => ({
+    label: `Still open after ${entry.delaySeconds} s`,
+    value: entry.count,
+  })),
+];
+
+export default function EvidencePage() {
+  const histogramSummary = BUCKETS.map((bucket) => `${formatSeconds(bucket.value)}: ${bucket.count}`).join(", ");
+
+  return (
+    <>
+      <section className="section">
+        <div className="container tight stack">
+          <div className="label">[ Evidence ]</div>
+          <h1 className="h1">The proof behind the numbers.</h1>
+          <p className="body-lg">
+            Nothing here is an estimate. Every number comes from records on the public test networks, and you can open
+            each one yourself. Where a result has a weak spot, we say so.
+          </p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container stack loose">
+          <div className="stack">
+            <div className="label">[ 1 · Speed ]</div>
+            <h2 className="h2">How long from a swap to the trade that answers it?</h2>
+            <p className="body-lg">
+              We ran it {CALLBACKS_REQUESTED} times. All {CALLBACKS_ARRIVED} trades arrived and {CALLBACK_TIMEOUTS}{" "}
+              went missing. {EXECUTED_COUNT} were completed, and {LATENCY_SAMPLES.length - EXECUTED_COUNT} was
+              cancelled on arrival because the prices had already moved back.
+            </p>
+          </div>
+
+          <div className={styles.latency}>
+            <div className={`cells ${styles.stats}`}>
+              {LATENCY_STATS.map((stat) => (
+                <div key={stat.label} className="cell">
+                  <div className="label">{stat.label}</div>
+                  <div className="metric">
+                    {(stat.value / 1000).toFixed(1)} <span className="unit">seconds</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className={`panel ${styles.chartPanel}`}>
+              <div className="panel-head label">
+                <span>[ How many runs took how long ]</span>
+                <span>{LATENCIES_MS.length} runs</span>
+              </div>
+              <div className={styles.chart} role="img" aria-label={`Number of runs per duration: ${histogramSummary}`}>
+                {BUCKETS.map((bucket) => (
+                  <div key={bucket.value} className={styles.barColumn}>
+                    <span className="mono num">{bucket.count}</span>
+                    <div
+                      className={`${styles.bar} ${bucket.value === P50_MS ? styles.median : ""}`}
+                      style={{ height: `${(bucket.count / MAX_COUNT) * 100}%` }}
+                    />
+                    <span className="mono num faint">{(bucket.value / 1000).toFixed(1)}s</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="notes">
+            <Note title="How we timed it">
+              Every block on Base Sepolia carries a timestamp. We subtract the timestamp of the block with the swap
+              from the timestamp of the block with the trade.
+            </Note>
+            <Note title="How precise">
+              Those timestamps move in steps of {BLOCK_INTERVAL_MS / 1000} seconds, so every result is a multiple of
+              that.
+            </Note>
+            <Note title="Weak spot">
+              {LATENCIES_MS.length} runs is a small sample, so &quot;slow end&quot; is simply the slowest run. The
+              blue bar is the typical time.
+            </Note>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="comparison">
+        <div className="container stack loose">
+          <div className="stack">
+            <div className="label">[ 2 · Does checking first help? ]</div>
+            <h2 className="h2">Fewer wasted trades, same profit.</h2>
+            <p className="body-lg">
+              Our contract checks whether a trade is worth it before sending it. To see what that check is worth, we
+              built a second copy without it, which sends every possible trade, and put both through the same 12 price
+              changes.
+            </p>
+          </div>
+          <CompareTable />
+          <div className="notes">
+            <Note title="What we found">
+              Both copies made the same {FILTERED.executed} trades. The copy without the check sent{" "}
+              {UNFILTERED.wasted} more that were cancelled on arrival, so checking first cut the fees paid on Base
+              Sepolia by {ETH_SAVED_PERCENT}%.
+            </Note>
+            <Note title="What it does not save">
+              The Reactive network charges for every price change it looks at, traded or not. That cost was nearly
+              the same for both copies, only {LREACT_DIFF_PERCENT}% apart.
+            </Note>
+            <Note title="Weak spot">
+              This is one run of 12 steps, and the two copies did not start from exactly the same pool sizes.
+            </Note>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container stack loose">
+          <div className="stack">
+            <div className="label">[ 3 · Three real examples ]</div>
+            <h2 className="h2">One example of each way it can end.</h2>
+            <p className="body-lg">
+              Each row is something that really happened. Click any link to see the record on the public blockchain
+              explorer.
+            </p>
+          </div>
+          <div className="panel table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">What happened</th>
+                  <th scope="col">1. The swap</th>
+                  <th scope="col">2. The check</th>
+                  <th scope="col">3. The trade</th>
+                  <th scope="col" className="numeric">
+                    Time taken
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {SCENARIOS.map((scenario) => (
+                  <tr key={scenario.name}>
+                    <td>{scenario.name}</td>
+                    <td>
+                      <HashLink chain="base" hash={scenario.triggerTx} />
+                    </td>
+                    <td>
+                      <div className="mono">{scenario.decision}</div>
+                      <HashLink chain="lasna" hash={scenario.decisionTx} />
+                    </td>
+                    <td>
+                      {scenario.callbackTx ? (
+                        <>
+                          <div className={`mono ${scenario.outcome === "Executed" ? "ok" : "warn"}`}>
+                            {scenario.outcome}
+                          </div>
+                          <HashLink chain="base" hash={scenario.callbackTx} />
+                        </>
+                      ) : (
+                        <span className="muted">Nothing was sent</span>
+                      )}
+                    </td>
+                    <td className="numeric">{scenario.latencyMs ? formatSeconds(scenario.latencyMs) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container split">
+          <div className="lead stack">
+            <div className="label">[ 4 · Would it make money for real? ]</div>
+            <h2 className="h2">On this token pair, mostly not. Here is why.</h2>
+            <p className="muted">
+              We took three days of real WETH/USDC trading on Base (11–13 November 2026, on Uniswap and Aerodrome) and
+              asked: how often did the two prices drift apart, and for how long?
+            </p>
+            <p className="muted">
+              They drifted apart {REPLAY.episodes} times, but {REPLAY.closedSameBlock} of those gaps were closed
+              instantly by other traders. A trade that takes one to two seconds almost never gets there first. So this
+              project shows that the method works. It does not show that it beats the competition on this pair.
+            </p>
+            {GITHUB_URL ? (
+              <a href={`${GITHUB_URL}/tree/main/replay`} target="_blank" rel="noreferrer" className="link-row">
+                How we did the replay ↗
+              </a>
+            ) : null}
+          </div>
+          <div className="body cells">
+            {REPLAY_CELLS.map((cell) => (
+              <div key={cell.label} className="cell">
+                <div className="label">{cell.label}</div>
+                <div className="metric">{cell.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container stack loose">
+          <div className="stack">
+            <div className="label">[ 5 · The second copy ]</div>
+            <h2 className="h2">The contracts used for the comparison.</h2>
+            <p className="body-lg">
+              These belong to the copy without the first check, from section 2. The main contracts are listed on the
+              home page.
+            </p>
+          </div>
+          <ContractTable rows={COMPARISON_STACK} />
+        </div>
+      </section>
+    </>
+  );
+}
+
+interface NoteProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function Note({ title, children }: NoteProps) {
+  return (
+    <p className="note">
+      <span className="label accent">[+] {title}</span>
+      <span>{children}</span>
+    </p>
+  );
+}

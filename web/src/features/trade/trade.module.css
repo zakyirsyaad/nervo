@@ -1,0 +1,328 @@
+.workspace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+  padding-top: 48px;
+}
+
+.left {
+  flex: 1 1 360px;
+  min-width: 0;
+  max-width: 480px;
+}
+
+.right {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Pool toggle */
+.toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-200);
+  border-radius: var(--radius-md);
+}
+
+.toggle button {
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toggle button:hover {
+  color: var(--ink);
+}
+
+.toggle button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+/* Swap form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  background: var(--bg-100);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+
+.inputBox.editable {
+  background: var(--bg-200);
+  border-color: var(--line-300);
+}
+
+.inputBox.editable:focus-within {
+  border-color: var(--accent);
+}
+
+.inputBox input,
+.inputBox output {
+  flex: 1 1 0;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  font: inherit;
+}
+
+.inputBox input[aria-invalid="true"] {
+  color: var(--danger);
+}
+
+.symbol {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.switchRow {
+  display: flex;
+  justify-content: center;
+}
+
+.switch {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-100);
+  background: var(--bg-100);
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 16px;
+}
+
+.switch:hover {
+  border-color: var(--line-300);
+  color: var(--ink);
+}
+
+.summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.summary dd {
+  margin: 0;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.faucet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.faucetActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+/* Market */
+.live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.marketCell {
+  gap: 8px;
+  padding: 20px 24px;
+}
+
+.marketValue {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.marketUnit {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+
+/* Timeline */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stepRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 24px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.stepIndex {
+  flex: 0 0 32px;
+  padding-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.stepText {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepTitle {
+  font-weight: 500;
+}
+
+.stepAside {
+  flex: 0 0 auto;
+  min-width: 96px;
+  text-align: right;
+  color: var(--ink-faint);
+}
+
+.done .stepIndex {
+  color: var(--ok);
+}
+
+.active {
+  background: var(--accent-dim);
+}
+
+.active .stepIndex,
+.active .stepAside {
+  color: var(--accent);
+}
+
+.pending .stepTitle,
+.off .stepTitle {
+  color: var(--ink-muted);
+}
+
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.fieldset:disabled {
+  opacity: 0.6;
+}
+
+.stalled {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.stalled p {
+  flex: 1 1 280px;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.details {
+  border-bottom: 1px solid var(--line-100);
+}
+
+.details summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.details summary:hover {
+  color: var(--ink);
+}
+
+.details .summary > div:last-child {
+  border-bottom: 0;
+}
+
+.stepTech {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}

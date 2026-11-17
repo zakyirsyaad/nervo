@@ -1,0 +1,45 @@
+{
+ "ringkasan": {
+  "sumber_waktu": "blockTimestampMs Base Sepolia (timestamp blok, resolusi 200 ms)",
+  "callback_diminta": 2,
+  "callback_tiba": 2,
+  "timeout": 0,
+  "menunggu": 0,
+  "p50_ms": 1200,
+  "p95_ms": 1800,
+  "min_ms": 1200,
+  "maks_ms": 1800,
+  "outcome": {
+   "Executed": 1,
+   "SkippedMarginGone": 1
+  }
+ },
+ "sampel": [
+  {
+   "opportunity_id": "0xcee1191920242a548d62b1f4e561db63e135de5dceeb6b9317f91b8d60ef6e39",
+   "origin_tx_hash": "0x5be4c13e8e82050dabd132dcd60fd3e75b2803c409958a87f03175eacf0a3a46",
+   "origin_block": 59089529,
+   "origin_ts_ms": 1794739774600,
+   "lasna_tx_hash": "0x695e4bf7030e53b168592b7c5c9ab8bee2058fee28e6846d8ef4fce30e9a3a15",
+   "lasna_block": 8402587,
+   "quoted_out": 1007142010,
+   "callback_tx_hash": "0xe34f0e6d3be968c3a320f8fe64be21c96251c5c3519d6f5bd60ce1756375be88",
+   "callback_block": 59089538,
+   "outcome": "Executed",
+   "latency_ms": 1800
+  },
+  {
+   "opportunity_id": "0xe53c1445f9b380b566f34734f987eed5e22538ed5f7f1807c980bd32beb2d8fa",
+   "origin_tx_hash": "0x4db64309a8f23a16dca81249f51a9cea6b8cb90a80c3c7160d5cb2fcf9c76290",
+   "origin_block": 59090298,
+   "origin_ts_ms": 1794739928400,
+   "lasna_tx_hash": "0x6b8ff7ea2a81af09dd6f8eaad8c1a29aa9a1f23afe9130a5a9ddc701a7efde97",
+   "lasna_block": 8402733,
+   "quoted_out": 1007173873,
+   "callback_tx_hash": "0xc0806ffd315879e0351d8c8395155ab746c4fbd765fef4d8d121d8db7ff3642b",
+   "callback_block": 59090304,
+   "outcome": "SkippedMarginGone",
+   "latency_ms": 1200
+  }
+ ]
+}
