@@ -1,5 +1,9 @@
 # Arb Loop
 
+[![CI](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml)
+[![Security](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml)
+[![On-chain check](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/onchain.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/onchain.yml)
+
 **One reactive loop, two uses: cross-chain arbitrage on Base Sepolia and stop-loss orders on Unichain Sepolia that react to the Base price. Decided on Reactive Lasna in under two seconds, with no off-chain bot.**
 
 Entry for the **Every Second Counts** track of the [Reactive Omni Buildathon](https://dorahacks.io/hackathon/reactive-omni-buildathon/detail).
@@ -346,6 +350,16 @@ cd replay && python3 -m unittest -v
 ```
 
 The Foundry suite covers the three scenarios end to end, incomplete and stale snapshots, duplicate and out-of-order logs, wrong callback callers, replay after execution, expiry, input bounds, missing inventory, and a pool that shortchanges the second leg. For protective orders it covers every outcome path, the mirror's caps and timeouts, an end-to-end loop through mock Reactive contracts, and invariants under random order and price logs.
+
+### Continuous integration
+
+Three GitHub Actions workflows run on this repository:
+
+- **[CI](.github/workflows/ci.yml)**, on every push to `main` and every pull request: `forge fmt --check`, build, tests and `forge snapshot --check` against [.gas-snapshot](.gas-snapshot); the Python tests on 3.9 and 3.14 plus `ruff check`; web lint, typecheck, tests and build.
+- **[Security](.github/workflows/security.yml)**, on the same events and weekly: Slither on `src/` (high-impact findings fail the run, the rest land in the Security tab), CodeQL on the web app, the Python tools and the workflows, and gitleaks on every new commit (the whole history on the weekly run).
+- **[On-chain check](.github/workflows/onchain.yml)**, daily, on demand from the Actions tab, and on pull requests that touch the contracts, their libraries or the tracker code: rebuilds the contracts and confirms every deployed address still runs this repository's bytecode (`tools/verify_deployed.py`), then replays the published benchmark samples through the web trackers against the live testnets.
+
+A change that moves gas on purpose needs a fresh snapshot: run `forge snapshot` and commit `.gas-snapshot` with it. GitHub pauses scheduled runs after 60 days without a commit; re-enable them from the Actions tab.
 
 ### Web app
 

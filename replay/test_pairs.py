@@ -6,8 +6,7 @@ import unittest
 
 import pairs
 import replay
-from quote import (Q96, round_trip, spot_price, stays_in_tick_range, tick_at, token0_to_token1,
-                   token1_to_token0)
+from quote import Q96, round_trip, spot_price, stays_in_tick_range, tick_at, token0_to_token1, token1_to_token0
 
 # A real Uniswap V3 WETH/USDC state from Base mainnet (block 55698123).
 SQRT = 3558871971696076658134608

@@ -2,7 +2,7 @@
 import unittest
 
 import replay
-from quote import Q96, round_trip_usdc, usdc_to_weth, weth_to_usdc
+from quote import round_trip_usdc, usdc_to_weth, weth_to_usdc
 
 # Two consecutive Uniswap V3 swaps from Base mainnet, blocks 55698123 and 55698124.
 REAL_SQRT_BEFORE = 3558871971696076658134608
