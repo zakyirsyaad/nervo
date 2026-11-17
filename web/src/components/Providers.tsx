@@ -34,7 +34,7 @@ const WALLETS_WITHOUT_WALLETCONNECT: WalletList = [
 ];
 
 const wagmiConfig = getDefaultConfig({
-  appName: "Arb Loop",
+  appName: "Nervo",
   // getDefaultConfig requires a value; it is never sent anywhere when no WalletConnect wallet is listed.
   projectId: WALLETCONNECT_PROJECT_ID || "unused-without-walletconnect",
   wallets: WALLETCONNECT_PROJECT_ID ? undefined : WALLETS_WITHOUT_WALLETCONNECT,

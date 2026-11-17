@@ -27,7 +27,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="bar">
         <Link href="/" className="wordmark">
-          Arb Loop
+          Nervo
         </Link>
         <nav className="site-nav" aria-label="Main">
           {NAV_LINKS.map((link) => (

@@ -1,4 +1,4 @@
-# Arb Loop web app
+# Nervo web app
 
 Four pages that let anyone trigger the loop, use it, and check the results without reading Solidity.
 

@@ -5,7 +5,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="bar">
-        <span>Arb Loop · Built for the Reactive Omni Buildathon · Testnet only, no real funds.</span>
+        <span>Nervo · Built for the Reactive Omni Buildathon · Testnet only, no real funds.</span>
         <nav aria-label="Footer">
           <Link href="/trade">Trade</Link>
           <Link href="/orders">Protect</Link>

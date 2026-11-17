@@ -11,7 +11,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Arb Loop", template: "%s · Arb Loop" },
+  title: { default: "Nervo", template: "%s · Nervo" },
   description:
     "Cross-chain arbitrage on Base Sepolia, decided on Reactive Lasna and executed by callback. Testnet only.",
 };
