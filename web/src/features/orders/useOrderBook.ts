@@ -110,7 +110,10 @@ export function useOrderBook(isDeployed: boolean): OrderBook {
   });
 
   const outcomes = logs.data?.outcomes ?? [];
-  const rows = buildBookRows(views.data ?? [], outcomes);
+  // keepPreviousData holds the last views while new ones load, and a disabled query (no refs) never replaces them,
+  // so only views of orders still in the window become rows; an empty window shows the empty-book notice.
+  const inWindow = new Set(refs.map((ref) => ref.id));
+  const rows = buildBookRows((views.data ?? []).filter((view) => inWindow.has(view.ref.id)), outcomes);
   return {
     rows,
     outcomes,
