@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GITHUB_URL } from "@/config/contracts";
+import { ChainMark } from "./ChainMark";
 import { WalletButton } from "./WalletButton";
 
 const NAV_LINKS = [
@@ -14,8 +15,8 @@ const NAV_LINKS = [
 
 /** Network the current page asks the wallet to use. */
 const PAGE_CHAIN = {
-  base: { label: "BASE SEPOLIA", brand: "Base", color: "var(--base-brand)" },
-  unichain: { label: "UNICHAIN SEPOLIA", brand: "Unichain", color: "var(--unichain-brand)" },
+  base: { key: "base", brand: "Base" },
+  unichain: { key: "unichain", brand: "Unichain" },
 } as const;
 
 export function SiteHeader() {
@@ -35,18 +36,21 @@ export function SiteHeader() {
             </Link>
           ))}
           {GITHUB_URL ? (
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="nav-external">
               GitHub ↗
             </a>
           ) : null}
         </nav>
         <div className="chain-badge">
-          <svg width="16" height="16" viewBox="0 0 16 16" role="img" aria-label={chain.brand}>
-            <rect width="16" height="16" rx="1.5" fill={chain.color} />
-          </svg>
-          <span>{chain.label}</span>
+          <ChainMark chain={chain.key} />
+          <span>
+            {chain.brand}
+            <span className="chain-network"> Sepolia</span>
+          </span>
         </div>
-        <WalletButton />
+        <div className="header-wallet">
+          <WalletButton />
+        </div>
       </div>
     </header>
   );

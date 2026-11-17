@@ -17,26 +17,29 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
   const clearsThreshold =
     pools !== undefined &&
     bestRoute(ARB_INPUT_USDC, pools.A, pools.B, POOL_FEE_BPS).usdcOut >= ARB_INPUT_USDC + MIN_SURPLUS_USDC;
+  const pendingText = isError ? "Unavailable" : "Loading…";
 
   return (
     <div className="panel">
       <div className="panel-head label">
-        <span>[ Live prices · 1 WETH in USDC ]</span>
-        {isError ? (
-          <span className="danger">Cannot reach the network</span>
-        ) : (
-          <span className={`accent ${styles.live}`}>
-            <span className={`${styles.dot} pulse`} />
-            Live
-          </span>
-        )}
+        <span>Live prices · 1 WETH in USDC</span>
+        <FeedStatus isError={isError} isLoaded={pools !== undefined} errorText="Cannot reach the network" />
       </div>
-      <div className="cells narrow flush">
-        <MarketCell label="Price on Pool A" value={priceA === undefined ? "—" : formatAmount(priceA, USDC_DECIMALS, 2)} />
-        <MarketCell label="Price on Pool B" value={priceB === undefined ? "—" : formatAmount(priceB, USDC_DECIMALS, 2)} />
+      <div className="cells narrow flush quad">
+        <MarketCell
+          label="Price on Pool A"
+          value={priceA === undefined ? undefined : formatAmount(priceA, USDC_DECIMALS, 2)}
+          pendingText={pendingText}
+        />
+        <MarketCell
+          label="Price on Pool B"
+          value={priceB === undefined ? undefined : formatAmount(priceB, USDC_DECIMALS, 2)}
+          pendingText={pendingText}
+        />
         <MarketCell
           label="Difference"
-          value={gap === undefined ? "—" : formatPercent(gap)}
+          value={gap === undefined ? undefined : formatPercent(gap)}
+          pendingText={pendingText}
           unit={clearsThreshold ? "worth trading" : "too small to trade"}
           tone={clearsThreshold ? "ok" : undefined}
         />
@@ -50,21 +53,45 @@ export function MarketPanel({ pools, isError }: MarketPanelProps) {
   );
 }
 
+interface FeedStatusProps {
+  isError: boolean;
+  isLoaded: boolean;
+  errorText: string;
+}
+
+/** Says "Live" only once a price has actually been read. Shared with the order page's price panel. */
+export function FeedStatus({ isError, isLoaded, errorText }: FeedStatusProps) {
+  if (isError) return <span className="danger">{errorText}</span>;
+  if (!isLoaded) return <span>Loading…</span>;
+  return (
+    <span className={`accent ${styles.live}`}>
+      <span className={styles.dot} aria-hidden="true" />
+      Live
+    </span>
+  );
+}
+
 interface MarketCellProps {
   label: string;
-  value: string;
+  /** Undefined until the value is known; the cell then shows pendingText instead of a number. */
+  value: string | undefined;
+  pendingText?: string;
   unit?: string;
   tone?: "ok";
 }
 
 /** One price cell, shared with the order page's price panel. */
-export function MarketCell({ label, value, unit, tone }: MarketCellProps) {
+export function MarketCell({ label, value, pendingText = "Loading…", unit, tone }: MarketCellProps) {
   return (
     <div className={`cell ${styles.marketCell}`}>
       <span className="small muted">{label}</span>
-      <span className={`${styles.marketValue} num ${tone ?? ""}`}>
-        {value} {unit ? <span className={styles.marketUnit}>{unit}</span> : null}
-      </span>
+      {value === undefined ? (
+        <span className={`${styles.marketPending} faint`}>{pendingText}</span>
+      ) : (
+        <span className={`${styles.marketValue} num ${tone ?? ""}`}>
+          {value} {unit ? <span className={styles.marketUnit}>{unit}</span> : null}
+        </span>
+      )}
     </div>
   );
 }

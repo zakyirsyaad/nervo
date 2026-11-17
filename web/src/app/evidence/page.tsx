@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChainMark } from "@/components/ChainMark";
 import { CompareTable } from "@/components/CompareTable";
 import { ContractTable } from "@/components/ContractTable";
 import { HashLink } from "@/components/HashLink";
@@ -49,7 +50,6 @@ export default function EvidencePage() {
     <>
       <section className="section">
         <div className="container tight stack">
-          <div className="label">[ Evidence ]</div>
           <h1 className="h1">The proof behind the numbers.</h1>
           <p className="body-lg">
             Nothing here is an estimate. Every number comes from records on the public test networks, and you can open
@@ -61,7 +61,7 @@ export default function EvidencePage() {
       <section className="section">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ 1 · Speed ]</div>
+            <div className="label">1 · Speed</div>
             <h2 className="h2">How long from a swap to the trade that answers it?</h2>
             <p className="body-lg">
               We ran it {CALLBACKS_REQUESTED} times. All {CALLBACKS_ARRIVED} trades arrived and {CALLBACK_TIMEOUTS}{" "}
@@ -71,7 +71,7 @@ export default function EvidencePage() {
           </div>
 
           <div className={styles.latency}>
-            <div className={`cells ${styles.stats}`}>
+            <div className={`cells quad ${styles.stats}`}>
               {LATENCY_STATS.map((stat) => (
                 <div key={stat.label} className="cell">
                   <div className="label">{stat.label}</div>
@@ -84,7 +84,7 @@ export default function EvidencePage() {
 
             <div className={`panel ${styles.chartPanel}`}>
               <div className="panel-head label">
-                <span>[ How many runs took how long ]</span>
+                <span>How many runs took how long</span>
                 <span>{LATENCIES_MS.length} runs</span>
               </div>
               <div className={styles.chart} role="img" aria-label={`Number of runs per duration: ${histogramSummary}`}>
@@ -122,8 +122,8 @@ export default function EvidencePage() {
       <section className="section" id="comparison">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ 2 · Does checking first help? ]</div>
-            <h2 className="h2">Fewer wasted trades, same profit.</h2>
+            <div className="label">2 · Does checking first help?</div>
+            <h2 className="h2">Same trades, far fewer wasted ones.</h2>
             <p className="body-lg">
               Our contract checks whether a trade is worth it before sending it. To see what that check is worth, we
               built a second copy without it, which sends every possible trade, and put both through the same 12 price
@@ -151,7 +151,7 @@ export default function EvidencePage() {
       <section className="section">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ 3 · Three real examples ]</div>
+            <div className="label">3 · Three real examples</div>
             <h2 className="h2">One example of each way it can end.</h2>
             <p className="body-lg">
               Each row is something that really happened. Click any link to see the record on the public blockchain
@@ -163,9 +163,24 @@ export default function EvidencePage() {
               <thead>
                 <tr>
                   <th scope="col">What happened</th>
-                  <th scope="col">1. The swap</th>
-                  <th scope="col">2. The check</th>
-                  <th scope="col">3. The trade</th>
+                  <th scope="col">
+                    <span className="chain-tag">
+                      <ChainMark chain="base" />
+                      1. The swap
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span className="chain-tag">
+                      <ChainMark chain="lasna" />
+                      2. The check
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span className="chain-tag">
+                      <ChainMark chain="base" />
+                      3. The trade
+                    </span>
+                  </th>
                   <th scope="col" className="numeric">
                     Time taken
                   </th>
@@ -194,7 +209,9 @@ export default function EvidencePage() {
                         <span className="muted">Nothing was sent</span>
                       )}
                     </td>
-                    <td className="numeric">{scenario.latencyMs ? formatSeconds(scenario.latencyMs) : "—"}</td>
+                    <td className="numeric">
+                      {scenario.latencyMs ? formatSeconds(scenario.latencyMs) : <span className="muted">No trade</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -206,7 +223,7 @@ export default function EvidencePage() {
       <section className="section">
         <div className="container split">
           <div className="lead stack">
-            <div className="label">[ 4 · Would it make money for real? ]</div>
+            <div className="label">4 · Would it make money for real?</div>
             <h2 className="h2">Not on the markets we tested. Here is why.</h2>
             <p className="muted">
               We took three days of real trading (11–13 November 2026) and, for {REPLAY.pairs} token pairs on Base
@@ -231,7 +248,7 @@ export default function EvidencePage() {
               </a>
             ) : null}
           </div>
-          <div className="body cells">
+          <div className="body cells quad">
             {REPLAY_CELLS.map((cell) => (
               <div key={cell.label} className="cell">
                 <div className="label">{cell.label}</div>
@@ -245,7 +262,7 @@ export default function EvidencePage() {
       <section className="section">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">[ 5 · The second copy ]</div>
+            <div className="label">5 · The second copy</div>
             <h2 className="h2">The contracts used for the comparison.</h2>
             <p className="body-lg">
               These belong to the copy without the first check, from section 2. The main contracts are listed on the
@@ -267,7 +284,7 @@ interface NoteProps {
 function Note({ title, children }: NoteProps) {
   return (
     <p className="note">
-      <span className="label accent">[+] {title}</span>
+      <span className="note-title">{title}</span>
       <span>{children}</span>
     </p>
   );

@@ -72,6 +72,12 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
   const minAmountOut = parseAmount(minOutShown, output.decimals);
   const lifetime = EXPIRY_CHOICES.find((choice) => choice.id === expiryId) ?? EXPIRY_CHOICES[0];
   const balance = wallet.balances?.[spec.tokenIn];
+  // No balance line until a wallet is connected, since there is nothing to read yet.
+  const balanceAside = !wallet.account
+    ? undefined
+    : balance === undefined
+      ? "Reading balance…"
+      : `On Unichain: ${formatAmount(balance, input.decimals, input.display)}`;
   const firesNow = basePrice !== undefined && Boolean(triggerPrice) && triggersImmediately(kind, triggerPrice ?? 0n, basePrice);
   const direction = spec.condition === "PriceAtOrBelow" ? "below" : "above";
   const isBusy = phase !== "idle";
@@ -132,7 +138,7 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
         <legend className="sr-only">New protective order</legend>
         <div className={`panel-head ${styles.headWrap}`}>
           <span className="label" aria-hidden="true">
-            [ New order ]
+            New order
           </span>
           <KindPicker value={kind} onChange={handleKind} />
         </div>
@@ -144,7 +150,7 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
           <OrderField
             id="order-amount"
             label={spec.tokenIn === "weth" ? "Amount to sell" : "Amount to spend"}
-            aside={`On Unichain: ${balance === undefined ? "—" : formatAmount(balance, input.decimals, input.display)}`}
+            aside={balanceAside}
             value={amountText}
             onChange={(value) => {
               setAmountText(value);

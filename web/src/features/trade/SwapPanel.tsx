@@ -52,6 +52,7 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
   const minAmountOut = preview ? applySlippage(preview.amountOut, SLIPPAGE_BPS) : undefined;
   const balanceIn = wallet.balances?.[tokenIn];
   const balanceOut = wallet.balances?.[tokenOut];
+  const pendingText = pools ? "Enter an amount" : "Loading prices…";
 
   const isBusy = phase !== "idle";
   const blocker = swapBlocker({
@@ -85,7 +86,7 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
         <legend className="sr-only">Swap</legend>
         <div className="panel-head">
           <span className="label" aria-hidden="true">
-            [ Swap ]
+            Swap
           </span>
           <div role="group" aria-label="Pool" className={styles.toggle}>
             {POOL_KEYS.map((key) => (
@@ -104,7 +105,7 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
           <div className={styles.field}>
             <div className={`small muted ${styles.fieldHead}`}>
               <label htmlFor="swap-amount">You pay</label>
-              <span className="num">Balance {formatBalance(balanceIn, input)}</span>
+              <BalanceNote balance={balanceIn} token={input} isConnected={Boolean(wallet.account)} />
             </div>
             <div className={`${styles.inputBox} ${styles.editable}`}>
               <input
@@ -138,11 +139,11 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
           <div className={styles.field}>
             <div className={`small muted ${styles.fieldHead}`}>
               <span id="swap-receive-label">You get, roughly</span>
-              <span className="num">Balance {formatBalance(balanceOut, output)}</span>
+              <BalanceNote balance={balanceOut} token={output} isConnected={Boolean(wallet.account)} />
             </div>
             <div className={styles.inputBox}>
               <output htmlFor="swap-amount" aria-labelledby="swap-receive-label" aria-live="off">
-                {preview ? formatAmount(preview.amountOut, output.decimals, output.display) : "—"}
+                {preview ? formatAmount(preview.amountOut, output.decimals, output.display) : null}
               </output>
               <span className={styles.symbol}>{output.symbol}</span>
             </div>
@@ -166,15 +167,15 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
         <dl className={styles.summary}>
           <SummaryRow
             term="You get at least"
-            value={minAmountOut === undefined ? "—" : `${formatAmount(minAmountOut, output.decimals, output.display)} ${output.symbol}`}
+            value={minAmountOut === undefined ? pendingText : `${formatAmount(minAmountOut, output.decimals, output.display)} ${output.symbol}`}
           />
           <SummaryRow
             term={`Price on Pool ${pool} after your swap`}
-            value={preview ? `${formatAmount(preview.priceAfter, USDC_DECIMALS, 2)} USDC` : "—"}
+            value={preview ? `${formatAmount(preview.priceAfter, USDC_DECIMALS, 2)} USDC` : pendingText}
           />
           <SummaryRow
             term={`Difference from Pool ${otherPool(pool)}`}
-            value={preview ? formatPercent(preview.gapBps) : "—"}
+            value={preview ? formatPercent(preview.gapBps) : pendingText}
           />
           <SummaryRow term="Pool fee" value={`${(Number(POOL_FEE_BPS) / 100).toFixed(2)}%`} />
           <SummaryRow term="Price movement allowed" value={`${Number(SLIPPAGE_BPS) / 100}%`} />
@@ -222,8 +223,17 @@ function apartLabel(gapBps: number): string {
   return `${(Math.abs(gapBps) / 100).toFixed(2)}%`;
 }
 
-function formatBalance(balance: bigint | undefined, token: { decimals: number; display: number }): string {
-  return balance === undefined ? "—" : formatAmount(balance, token.decimals, token.display);
+interface BalanceNoteProps {
+  balance: bigint | undefined;
+  token: { decimals: number; display: number };
+  isConnected: boolean;
+}
+
+/** Wallet balance beside a field. Says nothing until a wallet is connected, since there is no balance to show. */
+function BalanceNote({ balance, token, isConnected }: BalanceNoteProps) {
+  if (!isConnected) return null;
+  if (balance === undefined) return <span>Reading balance…</span>;
+  return <span className="num">Balance {formatAmount(balance, token.decimals, token.display)}</span>;
 }
 
 interface BlockerInput {
@@ -238,7 +248,7 @@ interface BlockerInput {
 /** Why the swap cannot be submitted, as a sentence shown under the button. */
 function swapBlocker({ amountText, amountIn, balanceIn, amountOut, hasPools, isLoopPending }: BlockerInput): string | undefined {
   if (!hasPools) return "Loading prices…";
-  if (isLoopPending) return "Your last swap is still playing out on the right. Wait for it to finish before swapping again.";
+  if (isLoopPending) return "Your last swap is still playing out under What happens next. Wait for it to finish before swapping again.";
   if (amountText.trim() === "") return "Enter an amount.";
   if (amountIn === null) return "Enter a valid amount, for example 3,000 or 0.5.";
   if (amountIn === 0n || amountOut === 0n) return "Enter an amount large enough to receive something.";

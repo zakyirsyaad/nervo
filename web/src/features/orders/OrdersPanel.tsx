@@ -30,7 +30,7 @@ export function OrdersPanel({ account, deployment, myOrders, selectedId, onSelec
   return (
     <div className="panel">
       <div className="panel-head label">
-        <span>[ Your orders ]</span>
+        <span>Your orders</span>
         {watchedCount === undefined ? null : (
           <span className={watchedCount >= MAX_WATCHED_PER_OWNER ? "warn" : undefined}>
             {watchedCount} of {MAX_WATCHED_PER_OWNER} watched

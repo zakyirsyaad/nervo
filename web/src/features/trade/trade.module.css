@@ -20,6 +20,11 @@
   gap: 32px;
 }
 
+/* Keeps a little space above a panel scrolled to the top of the screen. */
+.reveal {
+  scroll-margin-top: 16px;
+}
+
 /* Pool toggle */
 .toggle {
   display: flex;
@@ -30,14 +35,23 @@
 }
 
 .toggle button {
+  position: relative;
   height: 36px;
-  padding: 0 14px;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--ink-muted);
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The pill stays 36px tall; this reaches through the track's 4px padding for a 44px touch area. */
+.toggle button::before {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
 }
 
 .toggle button:hover {
@@ -201,6 +215,12 @@
   letter-spacing: -0.02em;
 }
 
+/* Same line height as a price, so nothing shifts when the price arrives. */
+.marketPending {
+  font-size: 15px;
+  line-height: 28px;
+}
+
 .marketUnit {
   font-size: 13px;
   font-weight: 400;
@@ -225,10 +245,12 @@
 }
 
 .stepIndex {
-  flex: 0 0 32px;
-  padding-top: 4px;
+  flex: 0 0 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
   font-size: 12px;
-  letter-spacing: 0.08em;
   color: var(--ink-faint);
 }
 

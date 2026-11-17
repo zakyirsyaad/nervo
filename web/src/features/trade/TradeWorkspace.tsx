@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { revealIfOffscreen } from "@/lib/reveal";
 import { LoopTimeline } from "./LoopTimeline";
 import { MarketPanel } from "./MarketPanel";
 import { SwapPanel } from "./SwapPanel";
@@ -11,9 +12,15 @@ import styles from "./trade.module.css";
 
 export function TradeWorkspace() {
   const [trackedSwap, setTrackedSwap] = useState<TrackedSwap>();
+  const timelineRef = useRef<HTMLDivElement>(null);
   const { pools, isError } = usePools();
   const wallet = useWallet();
   const loop = useLoop(trackedSwap);
+
+  function handleSwapped(swap: TrackedSwap) {
+    setTrackedSwap(swap);
+    revealIfOffscreen(timelineRef.current);
+  }
 
   return (
     <div className={`container ${styles.workspace}`}>
@@ -22,12 +29,14 @@ export function TradeWorkspace() {
           pools={pools}
           wallet={wallet}
           isLoopPending={Boolean(trackedSwap) && !loop.status.isFinal}
-          onSwapped={setTrackedSwap}
+          onSwapped={handleSwapped}
         />
       </div>
       <div className={styles.right}>
         <MarketPanel pools={pools} isError={isError} />
-        <LoopTimeline loop={loop} hasSwap={Boolean(trackedSwap)} />
+        <div ref={timelineRef} className={styles.reveal}>
+          <LoopTimeline loop={loop} hasSwap={Boolean(trackedSwap)} />
+        </div>
       </div>
     </div>
   );

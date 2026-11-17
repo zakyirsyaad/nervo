@@ -28,6 +28,12 @@ const EXPLORER: Record<ChainKey, string> = {
   unichain: "https://sepolia.uniscan.xyz",
 };
 
+export const CHAIN_NAME: Record<ChainKey, string> = {
+  base: "Base Sepolia",
+  lasna: "Reactive Lasna",
+  unichain: "Unichain Sepolia",
+};
+
 export const CHAIN_LABEL: Record<ChainKey, string> = {
   base: "Base Sepolia · 84532",
   lasna: "Reactive Lasna · 5318007",

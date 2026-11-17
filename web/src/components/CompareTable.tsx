@@ -17,7 +17,7 @@ const ROWS: readonly CompareRow[] = [
   { label: "Fees paid on Base Sepolia, in ETH", value: (stack) => stack.ethSpent.toFixed(ETH_DIGITS) },
   { label: "Fees paid on Reactive, in lREACT", value: (stack) => stack.lreactSpent.toFixed(LREACT_DIGITS), isDetail: true },
   {
-    label: "Time taken, typical / slowest",
+    label: "Time taken in this run, typical / slowest",
     value: (stack) => `${(stack.p50Ms / 1000).toFixed(1)} / ${(stack.p95Ms / 1000).toFixed(1)} s`,
     isDetail: true,
   },
