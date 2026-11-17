@@ -1,11 +1,11 @@
 /*
  * Arb Loop tokens, and why they are what they are.
  * Dark only: this is a trading screen, so prices and the live timeline should be the brightest things on it.
- * Colour: greys carry the text, one blue accent marks links and the step in progress, and the two brand
- *   colours belong to the chains (Base blue, Unichain pink), never to decoration.
+ * Colour: greys carry the text and one blue accent marks links and the step in progress. Any other colour
+ *   on the page comes from a chain's own logo.
  * Type: Inter for reading, with tabular figures for prices. Geist Mono only for values copied from a chain:
  *   hashes, addresses, event names, block numbers and typed amounts.
- * Chain mark: every step of the loop runs on a named chain, and the mark says which at a glance.
+ * Chain logo: every step of the loop runs on a named chain, and its logo says which at a glance.
  */
 :root {
   --bg-000: #000000;
@@ -23,8 +23,6 @@
   --ok: #7ee2a8;
   --warn: #e5a13a;
   --danger: #ff6369;
-  --base-brand: #0000ff;
-  --unichain-brand: #f50db4;
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -240,30 +238,13 @@ button:disabled {
   border: 0;
 }
 
-/* Chain mark. Decorative: the chain is always named in the text beside it. Reactive is hollow because it
-   decides what happens but never holds anyone's tokens. */
+/* Chain logo, at text size. Decorative: the chain is always named in the text beside it. */
 .chain-mark {
   display: inline-block;
   flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--chain-colour);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.2);
-  vertical-align: -1px;
-}
-
-.chain-mark[data-chain="base"] {
-  --chain-colour: var(--base-brand);
-}
-
-.chain-mark[data-chain="unichain"] {
-  --chain-colour: var(--unichain-brand);
-}
-
-.chain-mark[data-chain="lasna"] {
-  --chain-colour: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--ink-muted);
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
 }
 
 .chain-tag {
