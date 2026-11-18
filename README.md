@@ -1,4 +1,4 @@
-# Arb Loop
+# Nervo
 
 [![CI](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml)
 [![Security](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml)
