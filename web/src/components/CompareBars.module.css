@@ -1,0 +1,116 @@
+.figure {
+  margin: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg-muted);
+}
+
+.legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--fg-subtle);
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatchTraded,
+.swatchWasted {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.swatchTraded {
+  background: var(--fg-secondary);
+}
+
+.swatchWasted {
+  border: 1px solid var(--border-strong);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.rowLabel {
+  color: var(--fg);
+}
+
+.track {
+  display: flex;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--chip);
+}
+
+.traded {
+  background: var(--fg-secondary);
+}
+
+.wasted {
+  border: 1px solid var(--border-strong);
+  border-left: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.fees {
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.fees div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fees dt {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--fg-subtle);
+}
+
+.fees dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg);
+}
+
+.fees dd.ok {
+  color: var(--ok);
+}

@@ -277,3 +277,130 @@
 .followButton:hover {
   color: var(--accent);
 }
+
+/* Order kinds as radio cards: the sentence under each name says what the order does. */
+.kindRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kinds {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kinds legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.kind {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 2px 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+}
+
+.kind:hover {
+  background: var(--surface-hover);
+}
+
+.kind:has(input:checked) {
+  border-color: var(--fg-muted);
+  background: var(--surface-2);
+}
+
+.kind:has(input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.kind input {
+  margin: 4px 0 0;
+  accent-color: var(--fg);
+  cursor: pointer;
+}
+
+.kindName {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.kindSummary {
+  grid-column: 2;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg-muted);
+}
+
+/* The trigger drawn on a price track. */
+.ruler {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rulerTrack {
+  position: relative;
+  height: 32px;
+}
+
+.rulerTrack::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--chip);
+}
+
+.rulerZone {
+  position: absolute;
+  top: 14px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--fg-muted);
+}
+
+.rulerNow {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--fg);
+}
+
+.rulerTrigger {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  margin-left: -1px;
+  border-left: 2px dashed var(--fg-muted);
+}
+
+.rulerCaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--fg-subtle);
+}

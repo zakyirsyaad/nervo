@@ -46,6 +46,15 @@ export interface TrailSnapshot {
   readonly hasMirrorTimedOut: boolean;
 }
 
+/**
+ * Closed block ranges to read instead of placement-to-head. Live tracking leaves it out; tests replay an order
+ * older than the look-back windows with it.
+ */
+export interface TrailWindow {
+  readonly lasna: BlockRange;
+  readonly unichainToBlock: bigint;
+}
+
 interface Head {
   readonly number: bigint;
   readonly timestamp: bigint;
@@ -157,16 +166,28 @@ function after(head: bigint, cursor: bigint): bigint {
  * Reads what happened to the order since the previous snapshot: new Lasna and Unichain logs, and its current
  * status in the order book. The first call scans from the placement; later calls only read new blocks.
  */
-export async function fetchTrailSnapshot(ref: OrderRef, previous: TrailSnapshot | undefined): Promise<TrailSnapshot> {
+export async function fetchTrailSnapshot(
+  ref: OrderRef,
+  previous: TrailSnapshot | undefined,
+  window?: TrailWindow,
+): Promise<TrailSnapshot> {
   const [unichainHead, lasnaHead, details] = await Promise.all([
     unichainClient.getBlock({ blockTag: "latest" }),
     lasnaClient.getBlock({ blockTag: "latest" }),
     readOrderDetails(ref.id),
   ]);
-  const cursors: Cursors = previous ?? (await firstCursors(ref, unichainHead, lasnaHead));
+  const windowCursors: Cursors | undefined = window && {
+    lasnaNext: window.lasna.fromBlock,
+    unichainNext: ref.blockNumber,
+    isLasnaPartial: false,
+    isUnichainPartial: false,
+  };
+  const cursors: Cursors = previous ?? windowCursors ?? (await firstCursors(ref, unichainHead, lasnaHead));
+  const lasnaTo = window?.lasna.toBlock ?? lasnaHead.number;
+  const unichainTo = window?.unichainToBlock ?? unichainHead.number;
   const [lasnaFound, unichainFound] = await Promise.all([
-    scanLasna(ref.id, cursors.lasnaNext, lasnaHead.number),
-    scanUnichain(ref.id, cursors.unichainNext, unichainHead.number),
+    scanLasna(ref.id, cursors.lasnaNext, lasnaTo),
+    scanUnichain(ref.id, cursors.unichainNext, unichainTo),
   ]);
   const trail = appendTrail(previous?.trail ?? EMPTY_TRAIL, { ...lasnaFound, ...unichainFound });
   const startedAtMs = previous?.startedAtMs ?? Date.now();
@@ -174,8 +195,8 @@ export async function fetchTrailSnapshot(ref: OrderRef, previous: TrailSnapshot 
   return {
     trail,
     order: toOrderView(ref, details, unichainHead.timestamp, ORDER_STACK),
-    lasnaNext: after(lasnaHead.number, cursors.lasnaNext),
-    unichainNext: after(unichainHead.number, cursors.unichainNext),
+    lasnaNext: after(lasnaTo, cursors.lasnaNext),
+    unichainNext: after(unichainTo, cursors.unichainNext),
     isLasnaPartial: cursors.isLasnaPartial,
     isUnichainPartial: cursors.isUnichainPartial,
     startedAtMs,

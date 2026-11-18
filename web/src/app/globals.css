@@ -1,41 +1,108 @@
 /*
- * Arb Loop tokens, and why they are what they are.
- * Dark only: this is a trading screen, so prices and the live timeline should be the brightest things on it.
- * Colour: greys carry the text and one blue accent marks links and the step in progress. Any other colour
- *   on the page comes from a chain's own logo, except the price chart's two lines, which need one hue per pool.
- * Type: Inter for reading, with tabular figures for prices. Geist Mono only for values copied from a chain:
- *   hashes, addresses, event names, block numbers and typed amounts.
- * Chain logo: every step of the loop runs on a named chain, and its logo says which at a glance.
+ * Nervo tokens (Nervo Design System, built on Zorvo), and why they are what they are.
+ * Theme: follows the visitor's system. Dark leads, because on a trading screen the prices and the live
+ *   timeline should be the brightest things; light is a full theme, not an inversion.
+ * Colour: zinc greys carry the text. Violet is the one hue, and it marks only links, the loop step in
+ *   progress and an order waiting for its price. Green, amber and red only ever mean a state, beside a word.
+ * Type: the system font for reading, with tabular figures for prices. Geist Mono only for values copied
+ *   from a chain: hashes, addresses, event names, block numbers and typed amounts.
+ * The older names (bg-, line-, ink-) stay as aliases so feature modules keep working; new code uses the
+ *   Nervo names.
  */
 :root {
-  --bg-000: #000000;
-  --bg-100: #0a0a0a;
-  --bg-200: #161616;
-  --line-100: #1f1f1f;
-  --line-200: #2e2e2e;
-  --line-300: #666666;
-  --ink: #ededed;
-  --ink-muted: #a1a1a1;
-  --ink-faint: #8f8f8f;
-  --ink-inverse: #000000;
-  --accent: #52a8ff;
-  --accent-dim: #0d2b4d;
-  --ok: #7ee2a8;
-  --warn: #e5a13a;
-  --danger: #ff6369;
-  /* Pool A and Pool B lines. Validated for colour-blind separation and 3:1 contrast on the dark surface. */
+  --ground: #0a0a0b;
+  --sheet: #111113;
+  --surface-2: #18181b;
+  --surface-3: #1f1f23;
+  --surface-hover: #27272a;
+  --chip: rgba(255, 255, 255, 0.06);
+  --border: #27272a;
+  --border-mid: #3f3f46;
+  --border-strong: #71717a;
+  --fg: #fafafa;
+  --fg-secondary: #d4d4d8;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #8b8b94;
+  --primary: #fafafa;
+  --primary-hover: #ffffff;
+  --on-primary: #09090b;
+  --focus-ring: #a1a1aa;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-surface: #2e1065;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --danger-surface: #2a1215;
+  --attention-surface: #1f1a0d;
+  --attention-border: #6b5416;
+  /* Pool A and Pool B lines: blue against orange, so they part by lightness and hue for colour-blind readers. */
   --series-a: #3987e5;
   --series-b: #d2793c;
+  --selection: rgba(167, 139, 250, 0.28);
 
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --bg-000: var(--ground);
+  --bg-100: var(--sheet);
+  --bg-200: var(--surface-2);
+  --line-100: var(--border);
+  --line-200: var(--border-mid);
+  --line-300: var(--border-strong);
+  --ink: var(--fg);
+  --ink-muted: var(--fg-muted);
+  --ink-faint: var(--fg-subtle);
+  --ink-inverse: var(--on-primary);
+  --accent-dim: var(--accent-surface);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-sm: 4px;
   --radius-md: 6px;
+  --radius-btn: 8px;
+  --radius-panel: 10px;
   --radius-lg: 12px;
   --gutter: clamp(16px, 5vw, 64px);
   --page-width: 1200px;
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --ground: #f4f4f5;
+    --sheet: #fafafa;
+    --surface-2: #ffffff;
+    --surface-3: #ffffff;
+    --surface-hover: #e4e4e7;
+    --chip: rgba(9, 9, 11, 0.05);
+    --border: #e4e4e7;
+    --border-mid: #d4d4d8;
+    --border-strong: #808088;
+    --fg: #09090b;
+    --fg-secondary: #27272a;
+    --fg-muted: #52525b;
+    --fg-subtle: #67676f;
+    --primary: #09090b;
+    --primary-hover: #27272a;
+    --on-primary: #fafafa;
+    --focus-ring: #52525b;
+    --accent: #6d28d9;
+    --accent-hover: #5b21b6;
+    --accent-surface: #f5f3ff;
+    --ok: #047353;
+    --warn: #a34b08;
+    --danger: #b91c1c;
+    --danger-surface: #fef2f2;
+    --attention-surface: #fffbeb;
+    --attention-border: #e9c46a;
+    --series-a: #2563eb;
+    --series-b: #c2410c;
+    --selection: rgba(109, 40, 217, 0.16);
+    color-scheme: light;
+  }
+}
+
+::selection {
+  background: var(--selection);
 }
 
 * {
@@ -51,22 +118,23 @@ body {
 body {
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 22px;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
   color: var(--accent);
   text-decoration: none;
+  transition: color 150ms;
 }
 
 a:hover {
-  color: var(--ink);
+  color: var(--accent-hover);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -140,24 +208,24 @@ button:disabled {
 }
 
 .display {
-  font-size: clamp(40px, 6vw, 72px);
-  line-height: 1;
-  font-weight: 600;
+  font-size: clamp(38px, 5.4vw, 56px);
+  line-height: 1.02;
+  font-weight: 500;
   letter-spacing: -0.04em;
 }
 
 .h1 {
-  font-size: clamp(36px, 5vw, 48px);
-  line-height: 1.08;
-  font-weight: 600;
+  font-size: clamp(32px, 4.4vw, 48px);
+  line-height: 1.05;
+  font-weight: 500;
   letter-spacing: -0.035em;
 }
 
 .h2 {
-  font-size: clamp(26px, 3.5vw, 32px);
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: -0.03em;
+  font-size: clamp(26px, 3.5vw, 34px);
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.035em;
 }
 
 .h3 {
@@ -168,8 +236,8 @@ button:disabled {
 }
 
 .body-lg {
-  font-size: 18px;
-  line-height: 28px;
+  font-size: 16px;
+  line-height: 26px;
   color: var(--ink-muted);
   max-width: 620px;
 }
@@ -214,16 +282,16 @@ button:disabled {
 }
 
 .metric {
-  font-size: clamp(40px, 5vw, 56px);
+  font-size: clamp(36px, 4.4vw, 48px);
   line-height: 1;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.04em;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .metric .unit {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 0;
   color: var(--ink-faint);
@@ -260,7 +328,7 @@ button:disabled {
 .panel {
   background: var(--bg-100);
   border: 1px solid var(--line-100);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-panel);
   overflow: hidden;
 }
 
@@ -367,41 +435,65 @@ button:disabled {
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--line-300);
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border-strong);
   background: transparent;
-  color: var(--ink);
-  font-size: 14px;
-  line-height: 20px;
+  color: var(--fg-secondary);
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+a.btn {
+  color: var(--fg-secondary);
 }
 
 .btn:hover:not(:disabled) {
-  border-color: var(--ink);
-  color: var(--ink);
+  background: var(--surface-hover);
+  color: var(--fg);
 }
 
 .btn.primary {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--ink-inverse);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: #ffffff;
-  color: var(--ink-inverse);
+  background: var(--primary-hover);
+  color: var(--on-primary);
 }
 
+.btn.ghost {
+  border-color: transparent;
+}
+
+.btn.danger {
+  border-color: transparent;
+  background: var(--danger-surface);
+  color: var(--danger);
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: var(--danger-surface);
+  color: var(--fg);
+}
+
+/* A disabled primary turns flat; the reason is always written next to it. */
 .btn:disabled {
-  border-color: var(--line-200);
-  background: var(--bg-200);
-  color: var(--ink-faint);
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--fg-muted);
 }
 
 .btn.block {
   width: 100%;
-  min-height: 48px;
-  font-size: 15px;
+  min-height: 44px;
+  font-size: 13px;
 }
 
 .btn.mono {
@@ -492,13 +584,14 @@ button:disabled {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   grid-template-areas: "mark nav chain wallet";
   align-items: center;
-  column-gap: 32px;
+  column-gap: 24px;
 }
 
 .wordmark {
   grid-area: mark;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 44px;
   font-size: 16px;
   font-weight: 600;
@@ -510,29 +603,51 @@ button:disabled {
   grid-area: nav;
   display: flex;
   flex-wrap: wrap;
-  gap: 0 24px;
-  font-size: 14px;
-  font-weight: 500;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .site-nav a {
-  color: var(--ink-muted);
-  padding: 12px 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
+  transition:
+    background-color 150ms,
+    color 150ms;
 }
 
-.site-nav a:hover,
+.site-nav a:hover {
+  color: var(--fg);
+  background: var(--surface-hover);
+}
+
 .site-nav a[aria-current="page"] {
-  color: var(--ink);
+  color: var(--fg);
+  background: var(--chip);
+}
+
+@media (pointer: coarse) {
+  .site-nav a {
+    min-height: 44px;
+  }
 }
 
 .chain-badge {
   grid-area: chain;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-muted);
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--chip);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-muted);
   white-space: nowrap;
 }
 
@@ -557,7 +672,7 @@ button:disabled {
   }
 
   .site-nav {
-    gap: 0 20px;
+    margin-left: -10px;
   }
 
   .site-nav .nav-external {
@@ -611,5 +726,143 @@ button:disabled {
 @keyframes pulse {
   50% {
     opacity: 0.35;
+  }
+}
+
+/* Status badge: a word with its glyph, coloured by state. Colour never carries the meaning alone. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  background: var(--chip);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.badge.ok {
+  color: var(--ok);
+}
+
+.badge.warn {
+  color: var(--warn);
+}
+
+.badge.accent {
+  color: var(--accent);
+}
+
+/* A notice that needs the visitor: full border on all four sides, never a coloured left edge alone. */
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--attention-border);
+  background: var(--attention-surface);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--fg-secondary);
+}
+
+.notice strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Where the visitor is in a flow: done steps carry a check, the current one sits on the accent surface. */
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  background: var(--chip);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-muted);
+}
+
+.progress li .mark {
+  font-family: var(--font-mono);
+  color: var(--fg-subtle);
+}
+
+.progress li.done .mark {
+  color: var(--ok);
+}
+
+.progress li[aria-current="step"] {
+  background: var(--accent-surface);
+  color: var(--fg);
+}
+
+.progress li[aria-current="step"] .mark {
+  color: var(--accent);
+}
+
+/* Section numbers and eyebrow labels that sit above a heading and add a fact the heading does not. */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-subtle);
+}
+
+/* Quick jump links within a long page. */
+.jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jump-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--chip);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-secondary);
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.jump-nav a:hover {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+@media (pointer: coarse) {
+  .jump-nav a,
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* Jump links glide to their section, unless the visitor asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }

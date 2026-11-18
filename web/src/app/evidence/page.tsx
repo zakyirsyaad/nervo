@@ -23,6 +23,14 @@ import styles from "./evidence.module.css";
 
 export const metadata: Metadata = { title: "Evidence" };
 
+const JUMP_LINKS = [
+  { href: "#speed", label: "Speed" },
+  { href: "#comparison", label: "Checking first" },
+  { href: "#examples", label: "Three real runs" },
+  { href: "#markets", label: "Real markets" },
+  { href: "#second-copy", label: "The second copy" },
+] as const;
+
 const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
 const BUCKETS = histogram(LATENCIES_MS, BLOCK_INTERVAL_MS);
 // Beyond this many duration labels the axis text runs together, so only every n-th bucket is labelled,
@@ -61,13 +69,23 @@ export default function EvidencePage() {
             Nothing here is an estimate. Every number comes from records on the public test networks, and you can open
             each one yourself. Where a result has a weak spot, we say so.
           </p>
+          <nav className="jump-nav" aria-label="On this page">
+            {JUMP_LINKS.map((link, index) => (
+              <a key={link.href} href={link.href}>
+                <span className="kicker" aria-hidden="true">
+                  {index + 1}
+                </span>
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="speed">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">1 · Speed</div>
+            <div className="kicker">1 · Speed</div>
             <h2 className="h2">How long from a swap to the trade that answers it?</h2>
             <p className="body-lg">
               We ran it {CALLBACKS_REQUESTED} times. {CALLBACK_TIMEOUTS === 0 ? "All " : ""}
@@ -123,7 +141,7 @@ export default function EvidencePage() {
             </Note>
             <Note title="Weak spot">
               Most runs come from one test script that opens the same price gap again and again on a quiet test
-              network, so they show one kind of workload. The blue bar is the typical time.
+              network, so they show one kind of workload. The brightest bar is the typical time.
             </Note>
           </div>
         </div>
@@ -132,7 +150,7 @@ export default function EvidencePage() {
       <section className="section" id="comparison">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">2 · Does checking first help?</div>
+            <div className="kicker">2 · Does checking first help?</div>
             <h2 className="h2">Same trades, far fewer wasted ones.</h2>
             <p className="body-lg">
               Our contract checks whether a trade is worth it before sending it. To see what that check is worth, we
@@ -158,10 +176,10 @@ export default function EvidencePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="examples">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">3 · Three real examples</div>
+            <div className="kicker">3 · Three real examples</div>
             <h2 className="h2">One example of each way it can end.</h2>
             <p className="body-lg">
               Each row is something that really happened. Click any link to see the record on the public blockchain
@@ -230,10 +248,10 @@ export default function EvidencePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="markets">
         <div className="container split">
           <div className="lead stack">
-            <div className="label">4 · Would it make money for real?</div>
+            <div className="kicker">4 · Would it make money for real?</div>
             <h2 className="h2">Not on the markets we tested. Here is why.</h2>
             <p className="muted">
               We took three days of real trading (11–13 November 2026) and, for {REPLAY.pairs} token pairs on Base
@@ -269,10 +287,10 @@ export default function EvidencePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="second-copy">
         <div className="container stack loose">
           <div className="stack">
-            <div className="label">5 · The second copy</div>
+            <div className="kicker">5 · The second copy</div>
             <h2 className="h2">The contracts used for the comparison.</h2>
             <p className="body-lg">
               These belong to the copy without the first check, from section 2. The main contracts are listed on the

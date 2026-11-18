@@ -18,6 +18,7 @@ import {
 } from "./kinds";
 import { OrderFaucetRow } from "./OrderFaucetRow";
 import { OrderField } from "./OrderField";
+import { PriceRuler } from "./PriceRuler";
 import { orderBlocker } from "./orderDraft";
 import type { OrderRef } from "./orderList";
 import { ExpiryPicker, KindPicker } from "./OrderPickers";
@@ -137,15 +138,13 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
       {/* Locked while an order is in flight, so the panel always shows the order being signed. */}
       <fieldset disabled={isBusy} className={tradeStyles.fieldset}>
         <legend className="sr-only">New protective order</legend>
-        <div className={`panel-head ${styles.headWrap}`}>
-          <span className="label" aria-hidden="true">
-            New order
-          </span>
-          <KindPicker value={kind} onChange={handleKind} />
+        <div className="panel-head">
+          <h2 className={tradeStyles.panelTitle}>New order</h2>
         </div>
-        <p className="panel-row small muted">
-          {spec.summary} It watches the price on Base Sepolia and trades on Unichain Sepolia.
-        </p>
+        <div className={`panel-row ${styles.kindRow}`}>
+          <KindPicker value={kind} onChange={handleKind} />
+          <p className="small faint">It watches the price on Base Sepolia and trades on Unichain Sepolia.</p>
+        </div>
 
         <div className={`panel-row ${tradeStyles.form}`}>
           <OrderField
@@ -172,6 +171,7 @@ export function OrderForm({ contracts, prices, wallet, watchedCount, onPlaced }:
             hint={triggerHint}
             isWarning={firesNow}
           />
+          <PriceRuler now={basePrice} trigger={triggerPrice} isBelow={direction === "below"} firesNow={firesNow} />
           <OrderField
             id="order-min-out"
             label="You receive at least"

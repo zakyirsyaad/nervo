@@ -2,7 +2,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 64px;
+  gap: 32px;
   padding-top: 48px;
 }
 
@@ -45,26 +45,29 @@
 /* Pool toggle */
 .toggle {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   padding: 4px;
-  background: var(--bg-200);
+  background: var(--chip);
   border-radius: var(--radius-md);
 }
 
 .toggle button {
   position: relative;
-  height: 36px;
+  height: 32px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--ink-muted);
-  font-size: 14px;
+  color: var(--fg-muted);
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
+  transition:
+    background-color 150ms,
+    color 150ms;
 }
 
-/* The pill stays 36px tall; this reaches through the track's 4px padding for a 44px touch area. */
+/* The segment stays 32px tall; this reaches through the track's 4px padding toward a 44px touch area. */
 .toggle button::before {
   content: "";
   position: absolute;
@@ -76,8 +79,8 @@
 }
 
 .toggle button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--ink-inverse);
+  background: var(--surface-hover);
+  color: var(--fg);
 }
 
 /* Swap form */
@@ -107,20 +110,57 @@
   gap: 12px;
   height: 56px;
   padding: 0 16px;
-  background: var(--bg-100);
-  border: 1px solid var(--line-100);
-  border-radius: var(--radius-md);
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
   font-family: var(--font-mono);
   font-size: 20px;
 }
 
 .inputBox.editable {
-  background: var(--bg-200);
-  border-color: var(--line-300);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
 .inputBox.editable:focus-within {
-  border-color: var(--accent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.inputBox.editable:has(input[aria-invalid="true"]) {
+  border-color: var(--danger);
+}
+
+/* Quick amounts under the field: one tap to an amount that does (or does not) set off a trade. */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.presets button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.presets button:hover {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+@media (pointer: coarse) {
+  .presets button {
+    min-height: 44px;
+  }
 }
 
 .inputBox input,
@@ -152,17 +192,20 @@
 .switch {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--line-100);
-  background: var(--bg-100);
-  color: var(--ink-muted);
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--sheet);
+  color: var(--fg-muted);
   font-family: var(--font-mono);
   font-size: 16px;
+  transition:
+    background-color 150ms,
+    color 150ms;
 }
 
 .switch:hover {
-  border-color: var(--line-300);
-  color: var(--ink);
+  background: var(--surface-hover);
+  color: var(--fg);
 }
 
 .summary {
@@ -262,7 +305,7 @@
 }
 
 .stepIndex {
-  flex: 0 0 48px;
+  flex: 0 0 56px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -320,6 +363,7 @@
 }
 
 .stalled {
+  margin: 16px 24px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -352,7 +396,8 @@
 }
 
 .details summary:hover {
-  color: var(--ink);
+  color: var(--fg);
+  background: var(--surface-hover);
 }
 
 .details .summary > div:last-child {
@@ -364,4 +409,30 @@
   font-size: 12px;
   line-height: 16px;
   color: var(--ink-faint);
+}
+
+/* Page head: the title on the left, where the visitor is in the flow on the right. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+
+.headText {
+  flex: 1 1 380px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
 }

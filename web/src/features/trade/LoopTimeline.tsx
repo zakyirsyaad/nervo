@@ -10,15 +10,27 @@ import styles from "./trade.module.css";
 
 const TYPICAL_LATENCY_MS = percentile(LATENCIES_MS, 50);
 
+/** Badge colour per status: violet while the loop runs, green when it traded, amber when you have to wait. */
 const STATUS_TONE: Record<LoopStatusKind, string> = {
-  "waiting-decision": "warn",
-  "waiting-callback": "warn",
+  "waiting-decision": "accent",
+  "waiting-callback": "accent",
   executed: "ok",
-  skipped: "warn",
-  rejected: "muted",
-  "decision-timeout": "danger",
-  "callback-timeout": "danger",
-  error: "danger",
+  skipped: "",
+  rejected: "",
+  "decision-timeout": "warn",
+  "callback-timeout": "warn",
+  error: "warn",
+};
+
+const STATUS_GLYPH: Record<LoopStatusKind, string> = {
+  "waiting-decision": "●",
+  "waiting-callback": "●",
+  executed: "✓",
+  skipped: "–",
+  rejected: "–",
+  "decision-timeout": "!",
+  "callback-timeout": "!",
+  error: "!",
 };
 
 /** Shown when the loop stopped without a result, with a way to look again. */
@@ -51,9 +63,10 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
 
   return (
     <div className="panel">
-      <div className="panel-head label">
-        <span>What happens next</span>
-        <span role="status" className={hasSwap ? STATUS_TONE[status.kind] : undefined}>
+      <div className="panel-head">
+        <h2 className={styles.panelTitle}>Your loop</h2>
+        <span role="status" className={`badge ${hasSwap ? STATUS_TONE[status.kind] : ""}`}>
+          <span aria-hidden="true">{hasSwap ? STATUS_GLYPH[status.kind] : "–"}</span>
           {hasSwap ? status.label : "Waiting for your swap"}
         </span>
       </div>
@@ -97,10 +110,8 @@ export function LoopTimeline({ loop, hasSwap }: LoopTimelineProps) {
       </ol>
 
       {stalled ? (
-        <div className={`panel-row ${styles.stalled}`}>
-          <p role="alert" className="small danger">
-            {stalled.message}
-          </p>
+        <div className={`notice ${styles.stalled}`}>
+          <p role="alert">{stalled.message}</p>
           <button type="button" className="btn" onClick={loop.retry}>
             {stalled.action}
           </button>
