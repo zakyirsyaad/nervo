@@ -8,7 +8,8 @@ Recorded results behind the numbers in the main [README](../README.md). Each fil
 | [latency-2026-11-16.json](latency-2026-11-16.json) | `tools/latency_report.py` | Earlier result with the first 12 callbacks. Superseded by the 17 November file, which includes them |
 | [compare-run-2026-11-16.json](compare-run-2026-11-16.json) | `tools/compare_driver.py` | Run log of the filter comparison: both stacks' addresses, block range, funds before and after, and every step's transaction |
 | [compare-2026-11-16.json](compare-2026-11-16.json) | `tools/compare_report.py` | **The comparison result**, computed from the run log and chain data |
-| [order-latency-2026-11-17.json](order-latency-2026-11-17.json) | `tools/order_bench.py` | **The order latency result.** 10 stop-losses, each with the placement, mirror, price drop, trigger, fill and restore transactions, and the trigger-to-fill latency |
+| [order-latency-2026-11-18.json](order-latency-2026-11-18.json) | `tools/order_bench.py` | **The order latency result, second run.** 30 stop-losses with the same fields as the first run, including one that took 14.4 s |
+| [order-latency-2026-11-17.json](order-latency-2026-11-17.json) | `tools/order_bench.py` | **The order latency result, first run.** 10 stop-losses, each with the placement, mirror, price drop, trigger, fill and restore transactions, and the trigger-to-fill latency |
 | [order-2026-11-17.json](order-2026-11-17.json) | Collected from chain logs | **The first protective order**: every stage on Unichain Sepolia, Lasna and Base Sepolia, with the trigger-to-fill latency |
 | [latency-2026-11-15.json](latency-2026-11-15.json) | `tools/latency_report.py` | First, partial run with the 2 demo-scenario callbacks only. Superseded by the 16 November file, which includes them |
 | [observer-2026-11-15.jsonl](observer-2026-11-15.jsonl) | `tools/observe.py` | Raw event stream of the first demo scenarios as one machine saw them, one JSON object per line |
