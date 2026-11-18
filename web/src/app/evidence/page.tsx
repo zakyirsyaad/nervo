@@ -4,6 +4,7 @@ import { CompareTable } from "@/components/CompareTable";
 import { ContractTable } from "@/components/ContractTable";
 import { HashLink } from "@/components/HashLink";
 import { COMPARISON_STACK, GITHUB_URL } from "@/config/contracts";
+import { pageMetadata } from "@/config/site";
 import {
   BLOCK_INTERVAL_MS,
   CALLBACK_TIMEOUTS,
@@ -21,7 +22,13 @@ import { formatSeconds } from "@/lib/format";
 import { histogram, percentile } from "@/lib/latency";
 import styles from "./evidence.module.css";
 
-export const metadata: Metadata = { title: "Evidence" };
+// Built from the published data, so a new benchmark updates the search snippet with the page.
+const MEDIAN_SECONDS = ((percentile(LATENCIES_MS, 50) ?? 0) / 1000).toFixed(1);
+export const metadata: Metadata = pageMetadata({
+  title: "Evidence",
+  description: `Measured on testnet: ${CALLBACKS_ARRIVED} of ${CALLBACKS_REQUESTED} callbacks arrived, ${MEDIAN_SECONDS} s median from swap to trade, and ${ETH_SAVED_PERCENT}% lower callback fees from checking on Lasna first.`,
+  path: "/evidence",
+});
 
 const JUMP_LINKS = [
   { href: "#speed", label: "Speed" },

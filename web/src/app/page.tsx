@@ -17,7 +17,27 @@ import {
   UNFILTERED,
 } from "@/data/evidence";
 import { percentile } from "@/lib/latency";
+import { GITHUB_URL } from "@/config/contracts";
+import { pageMetadata, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/config/site";
+import type { Metadata } from "next";
 import styles from "./home.module.css";
+
+export const metadata: Metadata = pageMetadata({ description: SITE_DESCRIPTION, path: "/" });
+
+// Structured data for search engines: the site is a free web app on test networks. `<` is escaped so the
+// payload cannot close the script tag (the approach in Next's JSON-LD guide).
+const JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Any web browser",
+  isAccessibleForFree: true,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  ...(GITHUB_URL ? { sameAs: [GITHUB_URL] } : {}),
+}).replace(/</g, "\\u003c");
 
 const P50_MS = percentile(LATENCIES_MS, 50) ?? 0;
 const P95_MS = percentile(LATENCIES_MS, 95) ?? 0;
@@ -83,6 +103,7 @@ export default function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
       <section className={styles.heroSection} aria-labelledby="hero-title">
         <div className={styles.hero}>
           <div className={styles.heroCopy}>
