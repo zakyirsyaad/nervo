@@ -1,8 +1,8 @@
 # Nervo
 
-[![CI](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/ci.yml)
-[![Security](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/security.yml)
-[![On-chain check](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/onchain.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/reactive-hackaton/actions/workflows/onchain.yml)
+[![CI](https://github.com/zakyirsyaad/nervo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/nervo/actions/workflows/ci.yml)
+[![Security](https://github.com/zakyirsyaad/nervo/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/nervo/actions/workflows/security.yml)
+[![On-chain check](https://github.com/zakyirsyaad/nervo/actions/workflows/onchain.yml/badge.svg?branch=main)](https://github.com/zakyirsyaad/nervo/actions/workflows/onchain.yml)
 
 **One reactive loop, two uses: cross-chain arbitrage on Base Sepolia and stop-loss orders on Unichain Sepolia that react to the Base price. Decided on Reactive Lasna in under two seconds, with no off-chain bot.**
 
@@ -357,7 +357,7 @@ docs/reproduce.md            Step-by-step deploy and benchmark guide
 Requires [Foundry](https://book.getfoundry.sh/), Python 3.9+ and, for the web app, Node 20.9+ with pnpm.
 
 ```bash
-git clone --recurse-submodules https://github.com/zakyirsyaad/reactive-hackaton.git && cd reactive-hackaton
+git clone --recurse-submodules https://github.com/zakyirsyaad/nervo.git && cd nervo
 ```
 
 ```bash
