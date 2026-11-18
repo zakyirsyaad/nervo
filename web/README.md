@@ -76,4 +76,16 @@ src/features/orders/  Protective-order form, Unichain faucet, prices, order list
 
 ## Deploy
 
-On Vercel, import the repository with **Root Directory** set to `web` and add the three variables above.
+The live site is [nervo.zorvolabs.xyz](https://nervo.zorvolabs.xyz), a Vercel project connected to this repository: every push to `main` deploys to production and every pull request gets a preview.
+
+To set up your own, import the repository on Vercel and use these project settings:
+
+| Setting | Value |
+|---|---|
+| Root Directory | `web` |
+| Node.js | 24.x |
+| Install Command | `npx --yes pnpm@12.10.1 install --frozen-lockfile` |
+| Build Command | `npx --yes pnpm@12.10.1 run build` |
+| Environment variables | The three above, for Production and Preview |
+
+The install and build commands pin pnpm to the version in `package.json`. Vercel's bundled pnpm reads `pnpm-lock.yaml` as broken (it holds two YAML documents) and fails to fetch packages on Node 24.

@@ -26,3 +26,4 @@ replay/data/swaps*.csv
 
 # Planning notes, not part of the submission
 reactive-defi-build-brief.md
+.vercel
