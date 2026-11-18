@@ -22,6 +22,7 @@ The same loop also protects positions. A user places a stop-loss, take-profit or
 
 ## Contents
 
+- [Who it is for](#who-it-is-for)
 - [How it works](#how-it-works)
 - [Protective orders](#protective-orders)
 - [Why it needs Reactive](#why-it-needs-reactive)
@@ -32,6 +33,16 @@ The same loop also protects positions. A user places a stop-loss, take-profit or
 - [Repository layout](#repository-layout)
 - [Run it yourself](#run-it-yourself)
 - [Limitations](#limitations)
+
+## Who it is for
+
+**Someone holding WETH on Unichain who wants a stop-loss that still fires while they are offline.** Today that takes a bot, a process that watches the price around the clock and holds a key that can sign on Unichain, or a keeper service trusted with that job. Here the order sits in a contract on Unichain, a Reactive contract on Lasna watches the price, and nothing runs on the user's side after they place the order. On testnet, 40 of 40 stop-losses filled, 1.8 s at the median from the price crossing to the fill. The user pays a 0.0001 ETH fee per order; the Reactive contract spends about 0.07 lREACT on Lasna for it ([details](#protective-orders)).
+
+**Why the trigger reads the Base price.** In our 72-hour mainnet replay, the busiest ETH/USDC pool on Unichain held about 13 times less liquidity than the Base pool, and a 1,000 USDC trade moved it by about 11 bps. A stop placed close to the price on a pool that thin can be set off by a single trade on that pool. Over the same 72 hours the Base and Unichain prices stayed within 1.6 bps of each other at the median, so the order follows the deeper market, which takes far more capital to move, and still trades on Unichain. `minAmountOut` sets the least the user accepts from that trade.
+
+**Builders on Reactive.** Two results carry over to other projects. Deciding on Lasna before asking for a callback cut destination-chain fees by 56% with the same trades executed ([comparison](#filtering-on-lasna-versus-sending-every-candidate)). The replay shows that on Base a gap between two pools is closed inside the block that opened it, so a loop measured in seconds should not be built to race for it.
+
+**Not for arbitrage profit.** On the mainnet markets we replayed, other traders closed almost every gap within a second. Across all of them, one gap was still open 2 seconds later, worth 0.86 USDC. The arbitrage half proves the mechanism and its latency, not a market edge ([replay](#would-it-pay-on-a-real-market)).
 
 ## How it works
 
