@@ -16,7 +16,7 @@ The same loop also protects positions. A user places a stop-loss, take-profit or
 |---|---|
 | Median latency, swap to callback | **1.6 s** (p95 2.0 s, 73 of 73 callbacks arrived) |
 | Destination fees saved by filtering on Lasna | **56%**, with the same 3 trades executed |
-| Protective orders, trigger to fill | **1.8 s** median over 10 stop-losses (p95 2.6 s, 10 of 10 filled) on Unichain, triggered by the Base price ([details](#protective-orders)) |
+| Protective orders, trigger to fill | **1.8 s** median over 40 stop-losses (p95 2.8 s, 40 of 40 filled) on Unichain, triggered by the Base price ([details](#protective-orders)) |
 | Contracts | 4 core contracts, 3 test fixtures, 157 Foundry tests including invariants |
 | Web app | Live prices, swap, protective orders, faucets, and trackers that follow each loop across chains ([web/](web/)) |
 
@@ -130,15 +130,18 @@ sequenceDiagram
 
 From the Base block that crossed the trigger to the Unichain block that filled the order: 1.8 s. Record: [evidence/order-2026-11-17.json](evidence/order-2026-11-17.json).
 
-**Latency over 10 orders**, measured 17 November 2026 with [tools/order_bench.py](tools/order_bench.py). Each sample places a 0.1 WETH stop-loss 0.4% below the Base Pool A price, waits until Lasna mirrors it, sells WETH on Pool A until the price is 0.6% lower, waits for the fill on Unichain, then restores the price. A 0.6% move stays below the arbitrage threshold, so the arbitrage loop does not interfere.
+**Latency over 40 orders**, measured in two runs on 17 and 18 November 2026 (dates in UTC+7; the second run's block timestamps fall on 17 November UTC) with [tools/order_bench.py](tools/order_bench.py). Each sample places a 0.1 WETH stop-loss 0.4% below the Base Pool A price, waits until Lasna mirrors it, sells WETH on Pool A until the price is 0.6% lower, waits for the fill on Unichain, then restores the price. A 0.6% move stays below the arbitrage threshold, so the arbitrage loop does not interfere.
 
-| Orders | Filled | p50 | p95 | Min | Max |
-|---|---|---|---|---|---|
-| 10 | 10 | 1,800 ms | 2,600 ms | 1,200 ms | 2,600 ms |
+| Run | Orders | Filled | p50 | p95 | Min | Max |
+|---|---|---|---|---|---|---|
+| Both runs | 40 | 40 | 1,800 ms | 2,800 ms | 1,200 ms | 14,400 ms |
+| 17 November | 10 | 10 | 1,800 ms | 2,600 ms | 1,200 ms | 2,600 ms |
+| 18 November | 30 | 30 | 1,800 ms | 2,800 ms | 1,200 ms | 14,400 ms |
 
 - Latency is the timestamp of the Unichain block that filled the order minus `blockTimestampMs` of the Base block that crossed the trigger. Unichain timestamps are whole seconds, so each value is a lower bound: the true delay is up to one second longer.
-- Each order cost about 0.07 lREACT on Lasna (the order placement, the price update and the outcome each run `react()`), plus its 0.0001 ETH fee on Unichain.
-- Per-sample transactions on all three chains: [evidence/order-latency-2026-11-17.json](evidence/order-latency-2026-11-17.json).
+- 39 of the 40 orders filled within 2.8 s. The last sample of the 18 November run took 14.4 s. Lasna block timestamps are not used for any latency number, but they can still locate a delay: in the other 29 samples of the run they were within 1 s of the Base swap. In this sample Lasna recorded the trigger 12 s after the Base swap, and the callback to Unichain took 3 s as usual. The delay was in delivering the Base log to Lasna, not in the order book or the callback.
+- Each order cost about 0.07 lREACT on Lasna (the order placement, the price update and the outcome each run `react()`), plus its 0.0001 ETH fee on Unichain. The 30-order run used 2.09 lREACT.
+- Per-sample transactions on all three chains: [evidence/order-latency-2026-11-17.json](evidence/order-latency-2026-11-17.json) and [evidence/order-latency-2026-11-18.json](evidence/order-latency-2026-11-18.json).
 
 **Built for strangers to use.** The order book is a public testnet contract, so it is hardened against griefing as well as theft:
 
@@ -290,10 +293,16 @@ Several addresses repeat across chains (for example the Unichain test WETH and t
 
 Deployment transactions are recorded in [broadcast/](broadcast/).
 
-**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of all fifteen contracts above with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
+**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of fifteen of the contracts above (all except the two Unichain test tokens) with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
 
 ```bash
 forge build && python3 tools/verify_deployed.py
+```
+
+**Read the source on an explorer.** All 17 contracts above, including the two Unichain test tokens, are verified on [Sourcify](https://sourcify.dev). Blockscout and Reactscan show that source on the contract page: open an address on [base-sepolia.blockscout.com](https://base-sepolia.blockscout.com/address/0xb568530a915a7Ae01FBE5917E1B21d666b24DFE4), [unichain-sepolia.blockscout.com](https://unichain-sepolia.blockscout.com/address/0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b) or [lasna.reactscan.net](https://lasna.reactscan.net/address/0x0f70a79D1a0DFCB61005AF03084d3bED0e71E932?screen=verification). The six contracts of the protective-order stack are exact matches. The other eleven are partial matches: the bytecode is identical and only the metadata hash differs, because source comments changed after they were deployed. Basescan and Uniscan do not read Sourcify, so the links in the tables above show bytecode only.
+
+```bash
+forge verify-contract --verifier sourcify --chain-id <chain id> <address> <path>:<contract>
 ```
 
 ## Safety
