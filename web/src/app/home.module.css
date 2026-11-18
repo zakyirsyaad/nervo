@@ -1,34 +1,109 @@
+/* Home: one focal point (the measured headline and the real run beside it), then sections that change shape:
+   a metric strip, two unequal use cards, a full-width band for the two checks, a chart, a table. */
+
+.heroSection,
+.band {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 0 var(--gutter) clamp(56px, 10vw, 96px);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.heroSection {
+  padding-top: clamp(56px, 10vw, 96px);
+  padding-bottom: 64px;
+}
+
 .hero {
   display: flex;
   flex-wrap: wrap;
-  gap: 48px;
+  gap: 48px 64px;
   align-items: center;
 }
 
 .heroCopy {
-  flex: 1 1 480px;
+  flex: 1 1 440px;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.heroPanel {
-  flex: 1 1 380px;
-  min-width: 0;
-  max-width: 520px;
+.headline {
+  max-width: 12ch;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
-.step {
-  gap: 4px;
+.fine {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--fg-subtle);
 }
 
-.stepMeta,
-.stepBody,
-.total {
+.run {
+  flex: 1 1 440px;
+  min-width: 0;
+  margin: 0;
+}
+
+.runSteps {
+  list-style: none;
+  margin: 0;
+  padding: 8px 24px;
+}
+
+.runStep {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 16px 0 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.check {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.line {
+  flex: 1 1 auto;
+  width: 1px;
+  min-height: 12px;
+  background: var(--border-strong);
+}
+
+.runBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-bottom: 16px;
+}
+
+.runMeta,
+.runCode,
+.runTotal {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -36,53 +111,206 @@
   gap: 4px 12px;
 }
 
-.total {
-  padding-top: 24px;
-  padding-bottom: 24px;
+.runMeta {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-subtle);
 }
 
+.runMeta .mono {
+  font-size: 12px;
+}
+
+.runTitle {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.runCode {
+  justify-content: flex-start;
+}
+
+.runCode code {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-subtle);
+}
+
+.runTotal {
+  align-items: baseline;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.runTime {
+  font-size: 34px;
+  line-height: 38px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  color: var(--fg);
+}
+
+.unit {
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0;
+  color: var(--fg-subtle);
+}
+
+/* The metric group is one block of four cells divided by hairlines: one row, a 2 x 2 block, or a column. */
 .metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.metric {
+  background: var(--sheet);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+/* The arbitrage card is wider: it is the main demo; protective orders are the second use of the same loop. */
+.use {
+  flex: 2 1 320px;
+  min-width: 0;
+  padding: clamp(24px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.useWide {
+  flex: 3 1 460px;
+}
+
+.useLabel {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-subtle);
+}
+
+.useStat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pushDown {
+  margin-top: auto;
+}
+
+/* The two checks sit on a full-width sheet band: the one section that explains how it decides. */
+.checks {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--sheet);
+  margin-bottom: clamp(56px, 10vw, 96px);
+}
+
+.checks > .split {
   max-width: var(--page-width);
   margin: 0 auto;
-  border-left: 1px solid var(--line-100);
-  border-right: 1px solid var(--line-100);
+  padding: clamp(56px, 10vw, 96px) var(--gutter);
 }
 
-.metrics > div {
-  padding: 32px var(--gutter) 32px 24px;
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px 64px;
+  align-items: flex-start;
+}
+
+.lead {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.body {
+  flex: 2 1 520px;
+  min-width: 0;
 }
 
 .decisions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  align-items: start;
+  flex: 2 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.decision {
+  flex: 1 1 260px;
+  min-width: 0;
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
 }
 
 .decisionHead {
-  gap: 12px;
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.eventRow {
+.decisionTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.events {
+  margin: 0;
+}
+
+.event {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
-  gap: 4px 16px;
+  gap: 2px 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
 }
 
-.protect {
+.event:last-child {
+  border-bottom: 0;
+}
+
+.event dt {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-secondary);
+}
+
+.event dd {
+  margin: 0;
+}
+
+.sectionHead {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px 32px;
-  padding: 24px;
-}
-
-.protect > .stack {
-  flex: 1 1 320px;
-  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
 }

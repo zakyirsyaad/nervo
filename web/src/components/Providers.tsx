@@ -3,6 +3,7 @@
 import {
   darkTheme,
   getDefaultConfig,
+  lightTheme,
   RainbowKitProvider,
   type Wallet,
   type WalletList,
@@ -34,7 +35,7 @@ const WALLETS_WITHOUT_WALLETCONNECT: WalletList = [
 ];
 
 const wagmiConfig = getDefaultConfig({
-  appName: "Arb Loop",
+  appName: "Nervo",
   // getDefaultConfig requires a value; it is never sent anywhere when no WalletConnect wallet is listed.
   projectId: WALLETCONNECT_PROJECT_ID || "unused-without-walletconnect",
   wallets: WALLETCONNECT_PROJECT_ID ? undefined : WALLETS_WITHOUT_WALLETCONNECT,
@@ -47,13 +48,12 @@ const wagmiConfig = getDefaultConfig({
   ssr: true,
 });
 
-const rainbowTheme = darkTheme({
-  accentColor: "#ededed",
-  accentColorForeground: "#000000",
-  borderRadius: "small",
-  fontStack: "system",
-  overlayBlur: "none",
-});
+// The wallet dialog follows the system appearance like the page, with Nervo's inverted primary as its accent.
+const RAINBOW_SHARED = { borderRadius: "small", fontStack: "system", overlayBlur: "none" } as const;
+const rainbowTheme = {
+  darkMode: darkTheme({ ...RAINBOW_SHARED, accentColor: "#fafafa", accentColorForeground: "#09090b" }),
+  lightMode: lightTheme({ ...RAINBOW_SHARED, accentColor: "#09090b", accentColorForeground: "#fafafa" }),
+};
 
 interface ProvidersProps {
   children: ReactNode;

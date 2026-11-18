@@ -15,6 +15,11 @@ import styles from "./trade.module.css";
 
 const SLIPPAGE_BPS = 50n;
 const POOL_KEYS: readonly PoolKey[] = ["A", "B"];
+/** One tap to a typical amount. Small ones show the "too small" verdict, large ones set off a trade. */
+const QUICK_AMOUNTS: Record<TokenSymbol, readonly string[]> = {
+  usdc: ["500", "1,000", "3,000", "5,000"],
+  weth: ["0.1", "0.5", "1"],
+};
 const POOL_ADDRESS = { A: ADDRESSES.poolA, B: ADDRESSES.poolB } as const;
 
 const TOKENS = {
@@ -119,6 +124,13 @@ export function SwapPanel({ pools, wallet, isLoopPending, onSwapped }: SwapPanel
                 aria-describedby={blocker ? "swap-blocker" : undefined}
               />
               <span className={styles.symbol}>{input.symbol}</span>
+            </div>
+            <div role="group" aria-label={`Quick amounts in ${input.symbol}`} className={styles.presets}>
+              {QUICK_AMOUNTS[tokenIn].map((amount) => (
+                <button key={amount} type="button" onClick={() => setAmountText(amount)}>
+                  {amount}
+                </button>
+              ))}
             </div>
           </div>
 

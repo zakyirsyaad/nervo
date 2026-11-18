@@ -89,3 +89,14 @@ export const REPLAY = {
   crossChainViableAfter2s: 1,
   crossChainMedianGapBps: 1.6,
 } as const;
+
+/**
+ * Protective orders, trigger on Base Sepolia to fill on Unichain Sepolia, over both bench runs
+ * (evidence/order-latency-2026-11-17.json and evidence/order-latency-2026-11-18.json, summarised in README.md).
+ */
+export const ORDER_LATENCY = {
+  samples: 40,
+  filled: 40,
+  p50Ms: 1800,
+  p95Ms: 2800,
+} as const;

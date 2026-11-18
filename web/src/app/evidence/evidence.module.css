@@ -45,7 +45,7 @@
 }
 
 .median {
-  background: var(--accent);
+  background: var(--fg);
 }
 /* Keeps the label's height so every bar shares one baseline, but hides the text. */
 .axisHidden {

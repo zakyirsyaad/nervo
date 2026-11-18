@@ -7,15 +7,25 @@ interface KindPickerProps {
   onChange: (kind: OrderKind) => void;
 }
 
+/** Order types as radio cards, each with the sentence that says what it does, so nobody picks by name alone. */
 export function KindPicker({ value, onChange }: KindPickerProps) {
   return (
-    <div role="group" aria-label="Order type" className={tradeStyles.toggle}>
+    <fieldset className={styles.kinds}>
+      <legend className="small muted">What should happen</legend>
       {ORDER_KINDS.map((kind) => (
-        <button key={kind} type="button" aria-pressed={value === kind} onClick={() => onChange(kind)}>
-          {KIND_SPEC[kind].name}
-        </button>
+        <label key={kind} className={styles.kind}>
+          <input
+            type="radio"
+            name="order-kind"
+            value={kind}
+            checked={value === kind}
+            onChange={() => onChange(kind)}
+          />
+          <span className={styles.kindName}>{KIND_SPEC[kind].name}</span>
+          <span className={styles.kindSummary}>{KIND_SPEC[kind].summary}</span>
+        </label>
       ))}
-    </div>
+    </fieldset>
   );
 }
 
