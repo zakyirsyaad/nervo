@@ -20,5 +20,9 @@ updates:
     groups:
       web-minor-and-patch:
         update-types: [minor, patch]
+    # CI and Vercel run Node 24, so types for a newer Node would let code use APIs the runtime lacks.
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=25"]
     commit-message:
       prefix: chore
