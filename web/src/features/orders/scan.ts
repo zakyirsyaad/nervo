@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 import { orderBookAbi, orderReactiveAbi } from "@/config/orderAbis";
 import { ORDER_STACK } from "@/config/orders";
-import { lookbackStart, nextScanStart, splitRange } from "@/lib/blockRange";
+import { lookbackStart, nextScanStart, splitRange, type BlockRange } from "@/lib/blockRange";
 import { mapLimited } from "@/lib/concurrency";
 import { lasnaClient, UNICHAIN_LOG_BLOCKS, UNICHAIN_SCAN_CONCURRENCY, unichainClient } from "./clients";
 import { mergeOrderRefs, toOrderView, type OrderCache, type OrderDetails, type OrderRef, type OrderView } from "./orderList";
@@ -11,12 +11,14 @@ export const ORDER_SCAN_LOOKBACK = 50_000n;
 
 /**
  * Reads this owner's OrderPlaced logs from where the last scan stopped (or the start of the look-back window)
- * to the chain head, 1,000 blocks per request, and merges them into the cache.
+ * to the chain head, 1,000 blocks per request, and merges them into the cache. A `range` replaces that window
+ * with a closed one, so a test can replay an order older than the look-back.
  */
-export async function scanPlacedOrders(owner: Address, cache: OrderCache): Promise<OrderCache> {
-  const head = await unichainClient.getBlockNumber({ cacheTime: 0 });
-  const windowStart = lookbackStart(head, ORDER_SCAN_LOOKBACK, ORDER_STACK.orderBookDeployBlock);
-  const ranges = splitRange(nextScanStart(cache.scannedTo, windowStart), head, UNICHAIN_LOG_BLOCKS);
+export async function scanPlacedOrders(owner: Address, cache: OrderCache, range?: BlockRange): Promise<OrderCache> {
+  const head = range?.toBlock ?? (await unichainClient.getBlockNumber({ cacheTime: 0 }));
+  const start =
+    range?.fromBlock ?? nextScanStart(cache.scannedTo, lookbackStart(head, ORDER_SCAN_LOOKBACK, ORDER_STACK.orderBookDeployBlock));
+  const ranges = splitRange(start, head, UNICHAIN_LOG_BLOCKS);
 
   const pages = await mapLimited(ranges, UNICHAIN_SCAN_CONCURRENCY, (range) =>
     unichainClient.getContractEvents({
