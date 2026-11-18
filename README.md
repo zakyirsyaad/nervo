@@ -310,7 +310,7 @@ Deployment transactions are recorded in [broadcast/](broadcast/).
 forge build && python3 tools/verify_deployed.py
 ```
 
-**Read the source on an explorer.** All 17 contracts above, including the two Unichain test tokens, are verified on [Sourcify](https://sourcify.dev). Blockscout and Reactscan show that source on the contract page: open an address on [base-sepolia.blockscout.com](https://base-sepolia.blockscout.com/address/0xb568530a915a7Ae01FBE5917E1B21d666b24DFE4), [unichain-sepolia.blockscout.com](https://unichain-sepolia.blockscout.com/address/0x20eBb811ecD7198cAbB2D9293Ab13B94097DFe5b) or [lasna.reactscan.net](https://lasna.reactscan.net/address/0x0f70a79D1a0DFCB61005AF03084d3bED0e71E932?screen=verification). The six contracts of the protective-order stack are exact matches. The other eleven are partial matches: the bytecode is identical and only the metadata hash differs, because source comments changed after they were deployed. Basescan and Uniscan do not read Sourcify, so the links in the tables above show bytecode only.
+**Read the source on an explorer.** Every contract above has verified source on the explorer its link opens: the 14 on Base Sepolia and Unichain Sepolia on Basescan and Uniscan, and the three on Lasna on [Reactscan](https://lasna.reactscan.net/address/0x0f70a79D1a0DFCB61005AF03084d3bED0e71E932?screen=verification). All 17 are also on [Sourcify](https://sourcify.dev), which Blockscout reads. There the six contracts of the protective-order stack are exact matches. The other eleven are partial matches: the bytecode is identical and only the metadata hash differs, because source comments changed after they were deployed.
 
 ```bash
 forge verify-contract --verifier sourcify --chain-id <chain id> <address> <path>:<contract>

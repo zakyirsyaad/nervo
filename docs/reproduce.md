@@ -201,3 +201,11 @@ forge verify-contract --verifier sourcify --chain-id <chain id> <address> <path>
 ```
 
 Chain ids: Base Sepolia `84532`, Unichain Sepolia `1301`, Lasna `5318007`. The address and contract pairs are listed in [tools/verify_deployed.py](../tools/verify_deployed.py); the two Unichain test tokens use `src/fixtures/TestToken.sol:TestToken`.
+
+Basescan and Uniscan keep their own record and need an Etherscan API key (one key covers both). Put it in `.env` as `ETHERSCAN_API_KEY`, which is git-ignored. Uniscan picks up Sourcify exact matches by itself. For the rest, submit to Etherscan:
+
+```bash
+ETHERSCAN_API_KEY=<key> forge verify-contract --chain base-sepolia --verifier etherscan --constructor-args 0x --watch <address> <path>:<contract>
+```
+
+`--constructor-args 0x` skips Forge's local bytecode check, which fails on a partial match. Etherscan then reads the constructor arguments from the deployment transaction itself.
