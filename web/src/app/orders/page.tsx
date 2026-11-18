@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { ContractTable } from "@/components/ContractTable";
 import { ORDER_CONTRACTS, ORDER_STACK } from "@/config/orders";
+import { pageMetadata } from "@/config/site";
 import { OrdersWorkspace } from "@/features/orders/OrdersWorkspace";
 
-export const metadata: Metadata = { title: "Protect" };
+export const metadata: Metadata = pageMetadata({
+  title: "Protect",
+  description:
+    "Place a stop-loss, take-profit or limit buy on Unichain Sepolia that fires on the Base price, with no bot running. Follow each order from placement to fill.",
+  path: "/orders",
+});
 
 // Shown only while the two really share an address, so a redeploy at other nonces drops it by itself.
 const SHARED_ADDRESS_NOTE =
