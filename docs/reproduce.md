@@ -191,3 +191,13 @@ Unichain Sepolia ETH can be bridged from Ethereum Sepolia by sending ETH to its 
 ## 8. Mainnet replay
 
 See [replay/README.md](../replay/README.md). It needs no keys: it reads public Base mainnet logs.
+
+## 9. Source verification
+
+Publish the source to [Sourcify](https://sourcify.dev), which Blockscout and Reactscan read. No API key is needed. Run it from a clean `forge build` of the commit you deployed: if comments changed since, Sourcify still accepts the contract as a partial match (same bytecode, different metadata hash).
+
+```bash
+forge verify-contract --verifier sourcify --chain-id <chain id> <address> <path>:<contract>
+```
+
+Chain ids: Base Sepolia `84532`, Unichain Sepolia `1301`, Lasna `5318007`. The address and contract pairs are listed in [tools/verify_deployed.py](../tools/verify_deployed.py); the two Unichain test tokens use `src/fixtures/TestToken.sol:TestToken`.

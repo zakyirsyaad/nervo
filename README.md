@@ -130,7 +130,7 @@ sequenceDiagram
 
 From the Base block that crossed the trigger to the Unichain block that filled the order: 1.8 s. Record: [evidence/order-2026-11-17.json](evidence/order-2026-11-17.json).
 
-**Latency over 40 orders**, measured in two runs on 17 and 18 November 2026 with [tools/order_bench.py](tools/order_bench.py). Each sample places a 0.1 WETH stop-loss 0.4% below the Base Pool A price, waits until Lasna mirrors it, sells WETH on Pool A until the price is 0.6% lower, waits for the fill on Unichain, then restores the price. A 0.6% move stays below the arbitrage threshold, so the arbitrage loop does not interfere.
+**Latency over 40 orders**, measured in two runs on 17 and 18 November 2026 (dates in UTC+7; the second run's block timestamps fall on 17 November UTC) with [tools/order_bench.py](tools/order_bench.py). Each sample places a 0.1 WETH stop-loss 0.4% below the Base Pool A price, waits until Lasna mirrors it, sells WETH on Pool A until the price is 0.6% lower, waits for the fill on Unichain, then restores the price. A 0.6% move stays below the arbitrage threshold, so the arbitrage loop does not interfere.
 
 | Run | Orders | Filled | p50 | p95 | Min | Max |
 |---|---|---|---|---|---|---|
@@ -139,7 +139,7 @@ From the Base block that crossed the trigger to the Unichain block that filled t
 | 18 November | 30 | 30 | 1,800 ms | 2,800 ms | 1,200 ms | 14,400 ms |
 
 - Latency is the timestamp of the Unichain block that filled the order minus `blockTimestampMs` of the Base block that crossed the trigger. Unichain timestamps are whole seconds, so each value is a lower bound: the true delay is up to one second longer.
-- 39 of the 40 orders filled within 2.8 s. The last sample of the 18 November run took 14.4 s. In that sample Lasna recorded the trigger 12 s after the Base swap, against at most 1 s in the other 29 samples of the run, and the callback to Unichain took 3 s as usual. The delay was in delivering the Base log to Lasna, not in the order book or the callback.
+- 39 of the 40 orders filled within 2.8 s. The last sample of the 18 November run took 14.4 s. Lasna block timestamps are not used for any latency number, but they can still locate a delay: in the other 29 samples of the run they were within 1 s of the Base swap. In this sample Lasna recorded the trigger 12 s after the Base swap, and the callback to Unichain took 3 s as usual. The delay was in delivering the Base log to Lasna, not in the order book or the callback.
 - Each order cost about 0.07 lREACT on Lasna (the order placement, the price update and the outcome each run `react()`), plus its 0.0001 ETH fee on Unichain. The 30-order run used 2.09 lREACT.
 - Per-sample transactions on all three chains: [evidence/order-latency-2026-11-17.json](evidence/order-latency-2026-11-17.json) and [evidence/order-latency-2026-11-18.json](evidence/order-latency-2026-11-18.json).
 
@@ -293,7 +293,7 @@ Several addresses repeat across chains (for example the Unichain test WETH and t
 
 Deployment transactions are recorded in [broadcast/](broadcast/).
 
-**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of all fifteen contracts above with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
+**Check that the deployed contracts run this code.** [tools/verify_deployed.py](tools/verify_deployed.py) compares the runtime bytecode of fifteen of the contracts above (all except the two Unichain test tokens) with a fresh `forge build`, ignoring only immutable values and the metadata hash (which changes with comments). Every contract matches.
 
 ```bash
 forge build && python3 tools/verify_deployed.py
