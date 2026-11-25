@@ -10,6 +10,8 @@ Entry for the **Every Second Counts** track of the [Reactive Omni Buildathon](ht
 
 **Try it: [nervo.zorvolabs.xyz](https://nervo.zorvolabs.xyz).** Connect a wallet on Base Sepolia, claim test tokens from the faucet on the Trade page, and swap to set off the loop. The Protect page places stop-losses on Unichain Sepolia.
 
+**Demo video: [watch on YouTube](https://youtu.be/XdoSg63H1gE).**
+
 A swap on one of two WETH/USDC pools on Base Sepolia opens a price gap. A Reactive contract on Lasna sees the pool event, quotes the round trip in both directions, and requests a callback only when the gap clears a 2 USDC surplus. An executor on Base Sepolia re-checks the quote against live reserves and either trades both legs atomically or records why it skipped. Both decisions are on-chain events you can audit.
 
 The same loop also protects positions. A user places a stop-loss, take-profit or limit buy on Unichain Sepolia; a second Reactive contract mirrors the order book from its events, watches the price on Base Sepolia, and makes the order book execute the order on Unichain within about two seconds of the trigger. No keeper or server watches the price.
